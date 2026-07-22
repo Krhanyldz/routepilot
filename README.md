@@ -38,6 +38,7 @@ domain models ← all non-UI layers
 - `src/domain/location.ts`: validated canonical cities, airports, railway stations, and ferry terminals for the Global Location Engine.
 - `src/providers/interfaces.ts`: contracts for flight, train, ferry, and location search.
 - `src/providers/demo`: visibly labeled local demo implementations and fixtures.
+- `src/providers/production/amadeus`: opt-in server-side OAuth and Flight Offers Search adapter foundation.
 - `src/providers/aggregate.ts`: merges normalized results from allowed provider types.
 - `src/routing`: Haversine-based nearby discovery and constrained graph search.
 - `src/routing/candidate-departures.ts`: provider-independent candidate discovery by radius, ground duration, mode, distance, and positioning cost.
@@ -84,10 +85,12 @@ npm run build
 - [AI orchestration](docs/ai-orchestration.md)
 - [Data provider strategy](docs/data-provider-strategy.md)
 - [Global Location Engine](docs/location-engine.md)
+- [Amadeus Flight Provider](docs/amadeus-flight-provider.md)
 
 ## Current limitations
 
 - All fares, durations, and availability are fixed demo records rather than live inventory.
+- The Amadeus live adapter foundation is not wired into the UI or deterministic route search yet.
 - Distance radius is straight-line distance; it is not ground travel distance or duration.
 - Connection duration does not yet include configurable minimum connection or overnight buffers.
 - Self-transfer risk is explained but not numerically scored.
