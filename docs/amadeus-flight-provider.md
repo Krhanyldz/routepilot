@@ -18,6 +18,7 @@ Official references:
 - [Authorization guide](https://developers.amadeus.com/self-service/apis-docs/guides/developer-guides/API-Keys/authorization/)
 - [Flight APIs tutorial](https://developers.amadeus.com/self-service/apis-docs/guides/developer-guides/resources/flights/)
 - [Test data guide](https://developers.amadeus.com/self-service/apis-docs/guides/developer-guides/test-data/)
+- [Rate limits](https://developers.amadeus.com/self-service/apis-docs/guides/developer-guides/api-rate-limits/)
 
 ## Configuration
 
@@ -54,6 +55,7 @@ The provider endpoint accepts one country filter per request. A RoutePilot searc
 - OAuth tokens and secrets are server-only concerns and must never be sent to UI or AI layers.
 - Concurrent OAuth refreshes share one token request, and identical concurrent GETs share one upstream read. Completed reads are removed immediately rather than retained as an unapproved fare cache.
 - Three exhausted retryable failures open a 30-second circuit. Requests fail fast while open; after the cooldown, a single half-open probe may restore traffic. Invalid requests and authentication failures do not trip the circuit.
+- A provider-wide distributed gate paces test traffic to one request per 100 ms. Production requires explicit 1–40 TPS and positive daily request budgets and fails closed without either. The throughput limit follows Amadeus' documented ceiling; the daily limit is RoutePilot's operator-approved cost ceiling.
 - Fetch uses `no-store` until a provider-terms-compliant shared cache is designed.
 
 ## Coverage limitation
@@ -62,7 +64,7 @@ Amadeus documents that Self-Service Flight Offers Search does not include some l
 
 ## Current limitations and next steps
 
-- Airport and city search is not yet exposed through a public autocomplete endpoint.
+- Airport and city search is exposed through a validated server-only autocomplete endpoint in live mode.
 - No real credential or live request is exercised in automated tests.
 - Baggage and detailed fare rules require additional Amadeus pricing/confirmation flows.
 - Provider response caching and externally persisted runtime health telemetry remain future work.

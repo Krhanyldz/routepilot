@@ -24,7 +24,7 @@ Recommended initial alerts after connecting a log/metrics backend:
 
 - availability: `status >= 500` above 5% for five minutes;
 - provider degradation: `outcome` in `upstream`, `timeout`, or `provider-misconfigured` above 2% for ten minutes;
-- abuse or exhausted quota: `request-rate-limit` above 10% for five minutes;
+- abuse or exhausted quota: `request-rate-limit` or `provider-budget-exhausted` above 10% for five minutes;
 - latency: p95 `durationMs` above 2,000 ms for ten minutes;
 - readiness: two consecutive non-200 `/api/health` probes.
 
@@ -53,10 +53,12 @@ Before switching `ROUTE_DATA_MODE` to `live`:
 
 1. Configure Amadeus credentials server-side.
 2. Configure the Upstash REST URL, token, and a unique 32+ character rate-limit key secret.
-3. Confirm the ingress overwrites `X-Forwarded-For`.
-4. Confirm `/api/health` returns `200 ready`.
-5. Exercise a live search and verify provider failures do not expose upstream messages.
-6. Run `EXPECTED_ROUTE_DATA_MODE=live npm run smoke -- https://deployment.example` against the deployment URL.
+3. For Amadeus production, set `PROVIDER_MAX_REQUESTS_PER_SECOND` to the approved integer budget from 1 to 40 and `PROVIDER_MAX_REQUESTS_PER_DAY` to the operator-approved positive daily cost ceiling. Test mode is fixed to one request per 100 ms.
+4. Confirm the Amadeus account billing alert and the RoutePilot daily budget describe the same approved exposure.
+5. Confirm the ingress overwrites `X-Forwarded-For`.
+6. Confirm `/api/health` returns `200 ready`, including `providerBudget: ready`.
+7. Exercise a live search and verify provider failures do not expose upstream messages.
+8. Run `EXPECTED_ROUTE_DATA_MODE=live npm run smoke -- https://deployment.example` against the deployment URL.
 
 The smoke command refuses non-HTTPS remote targets. It verifies home availability, CSP/HSTS/frame protections, readiness mode, non-cacheable health responses, safe invalid-input behavior, and request-ID correlation without consuming a paid provider search.
 
@@ -75,6 +77,7 @@ Database restoration is currently not applicable because RoutePilot has no persi
 
 - **Provider outage:** circuit breaker fails fast; keep the site available with explicit provider-unavailable responses. Never substitute demo fares in live mode.
 - **Rate-limit store outage:** live production searches fail closed while static pages and health diagnostics remain available.
+- **Traffic spike or provider budget exhaustion:** valid searches receive a safe retryable capacity response before exceeding the distributed Amadeus budget.
 - **Bad application release:** roll back to the previous immutable deployment and verify it with the same smoke command.
 - **Credential exposure:** revoke and rotate the affected provider/Redis credential, redeploy, review structured logs for abuse, and invalidate any derived secrets.
 - **Hosting-region outage:** use the hosting platform's regional recovery capabilities; selecting and approving the production platform and regions is a deployment decision.

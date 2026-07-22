@@ -18,7 +18,7 @@ describe("GET /api/health", () => {
     expect(await response.json()).toMatchObject({
       status: "ready",
       mode: "demo",
-      checks: { flightInventory: "not-required", requestProtection: "not-required" },
+      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required" },
     });
   });
 

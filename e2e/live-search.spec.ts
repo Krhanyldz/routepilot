@@ -42,7 +42,7 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
   await page.route("**/api/flights/search", (route) => route.fulfill({
     status: 429,
     contentType: "application/json",
-    body: JSON.stringify({ status: "failure", reason: "request-rate-limit", message: "private detail" }),
+    body: JSON.stringify({ status: "failure", reason: "provider-budget-exhausted", message: "private detail" }),
   }));
   await page.goto("/");
   await chooseAirport(page, "Origin", "Hamburg");
@@ -50,8 +50,8 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
   await page.getByRole("button", { name: "Search" }).click();
 
   await expect(
-    page.getByRole("alert").filter({ hasText: "Too many searches" }),
-  ).toHaveText("Too many searches. Please wait a moment and try again.");
+    page.getByRole("alert").filter({ hasText: "Search capacity is busy" }),
+  ).toHaveText("Search capacity is busy. Please wait a moment and try again.");
   await expect(page.getByText("private detail")).toHaveCount(0);
 });
 
