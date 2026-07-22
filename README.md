@@ -86,6 +86,7 @@ npm run build
 - [Data provider strategy](docs/data-provider-strategy.md)
 - [Global Location Engine](docs/location-engine.md)
 - [Amadeus Flight Provider](docs/amadeus-flight-provider.md)
+- [Dependency security](docs/dependency-security.md)
 
 ## Current limitations
 
