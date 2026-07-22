@@ -54,7 +54,7 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
 async function chooseAirport(page: Page, label: string, query: string): Promise<void> {
   const input = page.getByRole("combobox", { name: label });
   await input.fill(query);
-  await expect(page.getByRole("option")).toBeVisible();
+  await expect(page.getByRole("listbox").getByRole("option")).toBeVisible();
   await input.press("ArrowDown");
   await input.press("Enter");
 }
