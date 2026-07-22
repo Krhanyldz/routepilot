@@ -5,7 +5,7 @@ RoutePilot is a provider-independent multimodal journey platform. The public sea
 ## Runtime data
 
 - Location autocomplete: Travelpayouts Data API
-- Flight inventory: optional Amadeus Self-Service integration
+- Flight inventory: unavailable until TravelPayouts grants separate Flight Search API access
 - Supported transport domain modes: flight, train, and ferry
 - Bus transport is intentionally unsupported
 
@@ -21,12 +21,11 @@ domain models ← all non-UI layers
 
 - `src/domain`: normalized locations, offers, routes, and constraints.
 - `src/providers/production/travelpayouts`: server-only worldwide city and airport data.
-- `src/providers/production/amadeus`: server-only OAuth and flight inventory.
 - `src/app/api/locations/search`: validated, rate-limited autocomplete boundary.
 - `src/app/api/flights/search`: validated, rate-limited flight inventory boundary.
 - `src/routing`: deterministic geographic and graph algorithms.
 - `src/knowledge-graph`: provider-independent topology validation and persistence.
-- `src/server`: request protection, provider budgets, security policy, tracing, and observability.
+- `src/server`: request protection, security policy, tracing, and observability.
 
 ## Environment
 
@@ -36,7 +35,7 @@ Copy `.env.example` to `.env.local`. Required for worldwide autocomplete:
 TRAVELPAYOUTS_API_TOKEN=
 ```
 
-Amadeus and distributed production protection variables are documented in the provider and operations guides. Secrets must remain server-side and must never be committed.
+Distributed production protection variables are documented in the operations guide. Secrets must remain server-side and must never be committed.
 
 ## Development and verification
 
@@ -55,7 +54,7 @@ npm run build
 - [Architecture roadmap](docs/roadmap.md)
 - [Global Location Engine](docs/location-engine.md)
 - [Travelpayouts Location Provider](docs/travelpayouts-location-provider.md)
-- [Amadeus Flight Provider](docs/amadeus-flight-provider.md)
+- [TravelPayouts provider migration](docs/travelpayouts-provider-migration.md)
 - [Live Flight Search API](docs/live-flight-search-api.md)
 - [Live Location Search API](docs/live-location-search-api.md)
 - [Production operations](docs/production-operations.md)
@@ -65,6 +64,6 @@ npm run build
 ## Current limitations
 
 - Live multimodal rail, ferry, and positioning inventory is not yet integrated.
-- Travelpayouts and Amadeus coverage is provider-limited.
+- TravelPayouts Data API does not provide the real-time itinerary inventory required by the live flight contract.
 - RoutePilot does not book, sell, or hold tickets.
 - Authentication, persistence, payments, and user accounts are outside the current MVP.

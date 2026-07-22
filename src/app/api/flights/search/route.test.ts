@@ -1,20 +1,12 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { POST } from "./route";
 
-const originalMode = process.env.ROUTE_DATA_MODE;
-
-afterEach(() => {
-  if (originalMode === undefined) delete process.env.ROUTE_DATA_MODE;
-  else process.env.ROUTE_DATA_MODE = originalMode;
-});
-
 describe("POST /api/flights/search", () => {
-  it("returns an explicit unavailable response in demo mode", async () => {
-    process.env.ROUTE_DATA_MODE = "demo";
+  it("returns an explicit unavailable response when TravelPayouts search access is absent", async () => {
     const response = await POST(request(validBody()));
 
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ status: "unavailable", reason: "live-mode-disabled" });
+    expect(await response.json()).toMatchObject({ status: "unavailable", reason: "provider-capability-unavailable" });
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(response.headers.get("traceparent")).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
@@ -22,7 +14,6 @@ describe("POST /api/flights/search", () => {
   });
 
   it("continues a valid incoming trace without reflecting its parent span", async () => {
-    process.env.ROUTE_DATA_MODE = "demo";
     const traceId = "1".repeat(32);
     const response = await POST(request(validBody(), {
       traceparent: `00-${traceId}-${"2".repeat(16)}-01`,

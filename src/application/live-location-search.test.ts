@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AirportSearchProvider, GeocodingProvider } from "@/providers/location-interfaces";
-import { AmadeusLocationProviderError } from "@/providers/production/amadeus";
+import {
+  LocationSearchProviderError,
+  type AirportSearchProvider,
+  type GeocodingProvider,
+} from "@/providers/location-interfaces";
 import { executeLiveLocationSearch, parseLiveLocationSearchRequest } from "./live-location-search";
 
 const provider: AirportSearchProvider & GeocodingProvider = {
@@ -28,7 +31,7 @@ describe("live location search application boundary", () => {
   it("maps provider failures without exposing messages", async () => {
     const failing = {
       ...provider,
-      searchAirports: vi.fn().mockRejectedValue(new AmadeusLocationProviderError("timeout", "secret upstream detail", true)),
+      searchAirports: vi.fn().mockRejectedValue(new LocationSearchProviderError("timeout", "secret upstream detail", true)),
     };
     await expect(executeLiveLocationSearch(
       { query: "HAM", kind: "airport", limit: 5 }, { configured: true, provider: failing },

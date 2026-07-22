@@ -43,9 +43,8 @@ export function createRequestProtection(
   factories: RequestProtectionFactories = defaultFactories,
 ): RequestProtection {
   const backend = parseBackend(environment.RATE_LIMIT_BACKEND);
-  const isProductionLive = environment.NODE_ENV === "production" && environment.ROUTE_DATA_MODE === "live";
-  if (isProductionLive && backend !== "upstash") {
-    throw new RequestProtectionConfigurationError("Production live mode requires a distributed rate-limit backend");
+  if (environment.VERCEL === "1" && backend !== "upstash") {
+    throw new RequestProtectionConfigurationError("Deployed Vercel environments require a distributed rate-limit backend");
   }
 
   if (backend === "memory") {
