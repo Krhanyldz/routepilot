@@ -1,6 +1,6 @@
 import type { CanonicalLocation } from "@/domain/location";
 import type { AirportSearchProvider, GeocodingProvider, LocationTextSearchQuery } from "@/providers/location-interfaces";
-import { AmadeusLocationProviderError } from "@/providers/production/amadeus";
+import { LocationSearchProviderError } from "@/providers/location-interfaces";
 
 export type LiveLocationSearchKind = "airport" | "city-and-airport";
 
@@ -30,7 +30,7 @@ export async function executeLiveLocationSearch(
       : await dependencies.provider.geocode(request);
     return { status: "success", locations };
   } catch (error) {
-    if (!(error instanceof AmadeusLocationProviderError)) return { status: "failure", reason: "upstream" };
+    if (!(error instanceof LocationSearchProviderError)) return { status: "failure", reason: "upstream" };
     if (error.code === "invalid-request") throw error;
     if (error.code === "authentication") return { status: "unavailable", reason: "provider-misconfigured" };
     return { status: "failure", reason: error.code };
@@ -48,13 +48,13 @@ export function parseLiveLocationSearchRequest(searchParams: URLSearchParams): L
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20) throw invalid("Location limit must be from 1 to 20");
   const countryValue = searchParams.get("countryCodes");
   const countryCodes = countryValue ? countryValue.split(",").filter(Boolean) : undefined;
-  if (query.trim().length < 2 || query.trim().length > 40) throw invalid("Location query must contain 2 to 40 characters");
+  if (query.trim().length < 2 || query.trim().length > 80) throw invalid("Location query must contain 2 to 80 characters");
   if (countryCodes && (countryCodes.length > 5 || countryCodes.some((code) => !/^[A-Z]{2}$/.test(code)))) {
     throw invalid("Invalid country codes");
   }
   return { query: query.trim(), kind, limit, ...(countryCodes ? { countryCodes } : {}) };
 }
 
-function invalid(message: string): AmadeusLocationProviderError {
-  return new AmadeusLocationProviderError("invalid-request", message, false);
+function invalid(message: string): LocationSearchProviderError {
+  return new LocationSearchProviderError("invalid-request", message, false);
 }

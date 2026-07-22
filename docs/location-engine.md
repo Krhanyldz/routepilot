@@ -2,7 +2,7 @@
 
 ## Purpose and current status
 
-The Global Location Engine gives RoutePilot a provider-independent foundation for resolving cities and transport hubs and discovering practical departure candidates. It is additive: the current MVP continues to use its existing deterministic demo location provider, while the new engine can be composed into a future application use case after its real data dependencies exist.
+The Global Location Engine gives RoutePilot a provider-independent foundation for resolving cities and transport hubs and discovering practical departure candidates. The public autocomplete composes this model with worldwide Travelpayouts city and airport data.
 
 No real API is connected. All included location-engine records are visibly sourced from `demo-global-locations` and must not be presented as live data.
 
@@ -55,7 +55,7 @@ The provider layer defines independent contracts for:
 - Railway station search.
 - Ferry terminal search.
 
-Interfaces return normalized canonical records and expose a source ID. Routing depends on these interfaces, never on the demo implementation. Demo implementations and fixtures live only under `src/providers/demo/location-engine`; future production adapters belong under `src/providers/production`.
+Interfaces return normalized canonical records and expose a source ID. Routing depends on these interfaces rather than a provider implementation. Production adapters live under `src/providers/production`.
 
 There is intentionally no bus provider or bus location type.
 

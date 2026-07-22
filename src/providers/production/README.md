@@ -1,7 +1,8 @@
 # Production provider adapters
 
-Production adapters belong in mode- or data-specific subdirectories here and must implement provider-independent contracts from `src/providers`.
+Production adapters implement provider-independent contracts from `src/providers`.
 
-The Amadeus adapter foundation under `amadeus/` implements server-side OAuth and Flight Offers Search normalization. It remains disabled unless live mode and credentials are explicitly configured, and it is not connected to the current UI search flow.
+- `travelpayouts/`: server-only worldwide city and airport reference data for autocomplete.
+- `amadeus/`: server-only OAuth and live Flight Offers Search normalization.
 
-No production location adapter is connected yet. Demo location fixtures and behavior remain isolated under `src/providers/demo/location-engine` and must never be presented as live data.
+Provider credentials remain server-side. Production adapters must return normalized domain data and explicit typed failures; they must never substitute hardcoded demo records when an upstream service fails.

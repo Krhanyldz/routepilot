@@ -3,14 +3,14 @@ import { expect, test, type Page } from "@playwright/test";
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/locations/search?**", async (route) => {
     const query = new URL(route.request().url()).searchParams.get("query")?.toUpperCase() ?? "";
-    const destination = query.startsWith("ANT");
+    const destination = query.startsWith("TOK");
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
         status: "success",
         locations: [destination
-          ? { id: "loc:airport:tr:ayt", name: "Antalya Airport", city: "Antalya", countryCode: "TR", iataCode: "AYT", type: "airport" }
-          : { id: "loc:airport:de:ham", name: "Hamburg Airport", city: "Hamburg", countryCode: "DE", iataCode: "HAM", type: "airport" }],
+          ? { id: "loc:city:jp:tyo", name: "Tokyo", city: "Tokyo", countryCode: "JP", iataCode: "TYO", type: "city" }
+          : { id: "loc:city:gb:lon", name: "London", city: "London", countryCode: "GB", iataCode: "LON", type: "city" }],
       }),
     });
   });
@@ -27,15 +27,16 @@ test("selects canonical airports and renders a verified live offer", async ({ pa
   expect(response?.headers()["x-frame-options"]).toBe("DENY");
   expect(response?.headers()["strict-transport-security"]).toBe("max-age=31536000");
   expect(response?.headers()["content-security-policy"]).toContain("object-src 'none'");
-  await chooseAirport(page, "Origin", "Hamburg");
-  await chooseAirport(page, "Destination", "Antalya");
+  await chooseAirport(page, "Origin", "London");
+  await chooseAirport(page, "Destination", "Tokyo");
+  await page.getByLabel("Departure").fill("2026-09-10");
   await page.getByRole("button", { name: "Search" }).click();
 
   await expect(page.getByText("1 flight offer")).toBeVisible();
   await expect(page.getByText("EUR 99.40")).toBeVisible();
   await expect(page.getByText("Limited provider coverage")).toBeVisible();
   await expect(page.getByText(/booking not sold by RoutePilot/i)).toBeVisible();
-  expect(submittedBody).toMatchObject({ originIataCode: "HAM", destinationIataCode: "AYT", adults: 1 });
+  expect(submittedBody).toMatchObject({ originIataCode: "LON", destinationIataCode: "TYO", adults: 1 });
 });
 
 test("shows a safe message when the provider budget is exhausted", async ({ page }) => {
@@ -45,8 +46,9 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
     body: JSON.stringify({ status: "failure", reason: "provider-budget-exhausted", message: "private detail" }),
   }));
   await page.goto("/");
-  await chooseAirport(page, "Origin", "Hamburg");
-  await chooseAirport(page, "Destination", "Antalya");
+  await chooseAirport(page, "Origin", "London");
+  await chooseAirport(page, "Destination", "Tokyo");
+  await page.getByLabel("Departure").fill("2026-09-10");
   await page.getByRole("button", { name: "Search" }).click();
 
   await expect(

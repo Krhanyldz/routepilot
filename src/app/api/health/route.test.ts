@@ -2,15 +2,19 @@ import { afterEach, describe, expect, it } from "vitest";
 import { GET } from "./route";
 
 const originalMode = process.env.ROUTE_DATA_MODE;
+const originalTravelpayoutsToken = process.env.TRAVELPAYOUTS_API_TOKEN;
 
 afterEach(() => {
   if (originalMode === undefined) delete process.env.ROUTE_DATA_MODE;
   else process.env.ROUTE_DATA_MODE = originalMode;
+  if (originalTravelpayoutsToken === undefined) delete process.env.TRAVELPAYOUTS_API_TOKEN;
+  else process.env.TRAVELPAYOUTS_API_TOKEN = originalTravelpayoutsToken;
 });
 
 describe("GET /api/health", () => {
   it("returns a non-cacheable readiness report", async () => {
     process.env.ROUTE_DATA_MODE = "demo";
+    process.env.TRAVELPAYOUTS_API_TOKEN = "token";
     const response = GET();
 
     expect(response.status).toBe(200);
@@ -18,7 +22,7 @@ describe("GET /api/health", () => {
     expect(await response.json()).toMatchObject({
       status: "ready",
       mode: "demo",
-      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required" },
+      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required", locationData: "ready" },
     });
   });
 

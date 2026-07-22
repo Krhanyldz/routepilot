@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("GET /api/locations/search", () => {
-  it("returns explicit unavailable state in demo mode", async () => {
+  it("returns explicit unavailable state without Travelpayouts configuration", async () => {
     process.env.ROUTE_DATA_MODE = "demo";
     const response = await GET(request("?query=Hamburg&kind=airport"));
     expect(response.status).toBe(503);
@@ -17,7 +17,7 @@ describe("GET /api/locations/search", () => {
     expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(response.headers.get("traceparent")).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
     expect(response.headers.get("server-timing")).toMatch(/^app;dur=\d+(\.\d+)?$/);
-    expect(await response.json()).toMatchObject({ status: "unavailable", reason: "live-mode-disabled" });
+    expect(await response.json()).toMatchObject({ status: "unavailable", reason: "provider-misconfigured" });
   });
 
   it("rejects invalid and excessive query strings", async () => {

@@ -1,19 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { DemoFerryProvider, DemoFlightProvider, DemoTrainProvider } from "./demo";
+import type { TransportMode, TransportOffer } from "@/domain/models";
+import type { TransportSearchProvider } from "./interfaces";
 import { aggregateTransportOffers } from "./aggregate";
 
-describe("provider aggregation", () => {
-  const providers = [new DemoFlightProvider(), new DemoTrainProvider(), new DemoFerryProvider()];
+const offers: TransportOffer[] = [
+  { id: "flight-one", providerId: "live-flight", dataSource: "live", fromLocationId: "origin", toLocationId: "destination", mode: "flight", price: 100, durationMinutes: 60, transfers: 0 },
+  { id: "train-one", providerId: "live-train", dataSource: "live", fromLocationId: "origin", toLocationId: "alternate", mode: "train", price: 20, durationMinutes: 30, transfers: 0 },
+];
+const provider = (mode: TransportMode): TransportSearchProvider => ({
+  id: `live-${mode}`,
+  mode,
+  search: (query) => offers.filter((offer) =>
+    offer.mode === mode && (!query.originLocationIds || query.originLocationIds.includes(offer.fromLocationId)),
+  ),
+});
+const providers = [provider("flight"), provider("train"), provider("ferry")];
 
+describe("provider aggregation", () => {
   it("aggregates normalized offers only from allowed provider modes", () => {
-    const offers = aggregateTransportOffers(providers, ["flight", "train"]);
-    expect(offers).toHaveLength(7);
-    expect(new Set(offers.map(({ providerId }) => providerId))).toEqual(new Set(["demo-flights", "demo-trains"]));
-    expect(offers.every(({ dataSource }) => dataSource === "demo")).toBe(true);
+    const result = aggregateTransportOffers(providers, ["flight"]);
+    expect(result).toEqual([expect.objectContaining({ id: "flight-one", dataSource: "live" })]);
   });
 
   it("passes provider-independent query filters through", () => {
-    const offers = aggregateTransportOffers(providers, ["flight"], { originLocationIds: ["airport-hamburg"] });
-    expect(offers.map(({ id }) => id).sort()).toEqual(["ham-ayt", "ham-ist"]);
+    expect(aggregateTransportOffers(providers, ["flight"], { originLocationIds: ["missing"] })).toEqual([]);
   });
 });
