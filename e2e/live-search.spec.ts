@@ -52,7 +52,7 @@ test("shows a safe message when live flight capability is unavailable", async ({
   await page.getByRole("button", { name: "Search" }).click();
 
   await expect(
-    page.getByRole("alert").filter({ hasText: "Live flight results are not available" }),
+    page.getByRole("alert").filter({ hasText: "Live flight results are unavailable" }),
   ).toContainText("TravelPayouts Flight Search API access");
   await expect(page.getByText("private detail")).toHaveCount(0);
 });
