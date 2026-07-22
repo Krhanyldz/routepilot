@@ -47,7 +47,7 @@ The provider-independent request-protection contract supports two backends:
 
 Production live mode fails closed unless `RATE_LIMIT_BACKEND=upstash` and all Upstash credentials are configured. A Redis failure returns `503 request-protection-unavailable`; it never silently falls back to process memory. Client addresses are HMAC-SHA256 pseudonyms before they leave the application process, using a deployment-only `RATE_LIMIT_KEY_SECRET` of at least 32 characters.
 
-The endpoint expects the production ingress proxy to overwrite `X-Forwarded-For`; deployments must not trust a directly client-controlled forwarded header. The limit remains 20 searches per minute per pseudonymous client identifier.
+The endpoint expects the production ingress proxy to overwrite `X-Forwarded-For`; deployments must not trust a directly client-controlled forwarded header. Flight and location provider searches share a limit of 20 requests per minute per pseudonymous client identifier.
 
 Required production live variables:
 

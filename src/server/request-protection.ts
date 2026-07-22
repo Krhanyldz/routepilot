@@ -17,6 +17,17 @@ export interface RequestProtection {
   identify(request: Request): string;
 }
 
+export class RequestProtectionGate {
+  private protection: RequestProtection | undefined;
+
+  constructor(private readonly factory: () => RequestProtection = createRequestProtection) {}
+
+  async consume(request: Request) {
+    const protection = this.protection ??= this.factory();
+    return protection.limiter.consume(protection.identify(request));
+  }
+}
+
 interface RequestProtectionFactories {
   memory(): RequestRateLimiter;
   upstash(url: string, token: string): RequestRateLimiter;

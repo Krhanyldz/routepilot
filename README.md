@@ -48,6 +48,7 @@ domain models ← all non-UI layers
 - `src/ai`: deterministic Travel Strategist orchestration over sanitized route-engine evidence; it does not calculate or rank routes.
 - `src/application`: composes provider implementations for the current demo use case.
 - `src/app/api/flights/search`: validated, rate-limited server boundary for opt-in live flight inventory.
+- `src/app/api/locations/search`: validated canonical airport/city autocomplete boundary for opt-in live inventory.
 - `src/app/api/health`: secret-safe deployment readiness for demo and live configuration.
 - `src/components`: small presentational search and result components.
 
@@ -91,6 +92,7 @@ npm run build
 - [Dependency security](docs/dependency-security.md)
 - [Continuous integration](docs/continuous-integration.md)
 - [Live Flight Search API](docs/live-flight-search-api.md)
+- [Live Location Search API](docs/live-location-search-api.md)
 - [Production operations](docs/production-operations.md)
 
 ## Current limitations

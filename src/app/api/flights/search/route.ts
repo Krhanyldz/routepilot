@@ -1,13 +1,13 @@
 import { executeLiveFlightSearch, parseLiveFlightSearchQuery } from "@/application/live-flight-search";
 import { LiveFlightProviderError } from "@/providers/live-flight";
 import { configureFlightInventory } from "@/providers/production/amadeus";
-import { createRequestProtection, RequestProtectionConfigurationError, type RequestProtection } from "@/server/request-protection";
+import { RequestProtectionConfigurationError, RequestProtectionGate } from "@/server/request-protection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maximumBodyBytes = 16_384;
-let requestProtection: RequestProtection | undefined;
+const requestProtection = new RequestProtectionGate();
 const responseHeaders = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
@@ -17,8 +17,7 @@ export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
   let rateLimit;
   try {
-    const protection = requestProtection ??= createRequestProtection();
-    rateLimit = await protection.limiter.consume(protection.identify(request));
+    rateLimit = await requestProtection.consume(request);
   } catch (error) {
     if (error instanceof RequestProtectionConfigurationError) {
       return json({ status: "unavailable", reason: "request-protection-misconfigured", requestId }, 503);

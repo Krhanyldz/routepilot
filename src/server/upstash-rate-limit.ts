@@ -26,7 +26,7 @@ export function createUpstashRateLimiter(url: string, token: string): RequestRat
   const client = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(20, "60 s"),
-    prefix: "routepilot:flight-search",
+    prefix: "routepilot:provider-search",
     analytics: false,
     timeout: 0,
   });
