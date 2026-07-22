@@ -78,6 +78,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run smoke -- https://your-deployment.example
 ```
 
 ## Product foundation
