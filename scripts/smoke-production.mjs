@@ -67,6 +67,8 @@ async function verifySafeValidation(origin) {
   assert(body?.reason === "invalid-request", "Invalid search did not fail closed");
   assert(typeof body?.requestId === "string" && body.requestId.length > 0, "Invalid search omitted request correlation");
   assert(response.headers.get("x-request-id") === body.requestId, "Request correlation headers do not match");
+  assert(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/.test(response.headers.get("traceparent") ?? ""), "Trace context is missing or malformed");
+  assert(/^app;dur=\d+(\.\d+)?$/.test(response.headers.get("server-timing") ?? ""), "Server timing is missing or malformed");
   assert(!JSON.stringify(body).includes("Amadeus"), "Invalid search exposed provider details");
 }
 

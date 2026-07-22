@@ -1,7 +1,7 @@
 import { executeLiveLocationSearch, parseLiveLocationSearchRequest } from "@/application/live-location-search";
 import { configureLocationSearch, readRouteDataMode, AmadeusLocationProviderError } from "@/providers/production/amadeus";
 import { RequestProtectionConfigurationError, RequestProtectionGate } from "@/server/request-protection";
-import { apiOutcome, observeApiRequest } from "@/server/api-observability";
+import { apiOutcome, createTraceContext, observeApiRequest } from "@/server/api-observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,10 +12,11 @@ const responseHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options":
 
 export async function GET(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
-  const observation = observeApiRequest("location-search", "GET", requestId);
+  const trace = createTraceContext(request.headers.get("traceparent"));
+  const observation = observeApiRequest("location-search", "GET", requestId, { trace });
   const respond = (body: unknown, status: number, headers: Record<string, string> = {}) => {
-    observation.complete(status, apiOutcome(body));
-    return json(body, status, requestId, headers);
+    const event = observation.complete(status, apiOutcome(body));
+    return json(body, status, requestId, trace.traceparent, event.durationMs, headers);
   };
   if (request.url.length > maximumUrlLength) return respond({ status: "failure", reason: "uri-too-long", requestId }, 414);
   let rateLimit;
@@ -56,6 +57,12 @@ function safeLocationConfiguration(): { configured: boolean; provider: ReturnTyp
   }
 }
 
-function json(body: unknown, status: number, requestId: string, headers: Record<string, string> = {}): Response {
-  return Response.json(body, { status, headers: { ...responseHeaders, "X-Request-Id": requestId, ...headers } });
+function json(body: unknown, status: number, requestId: string, traceparent: string, durationMs: number, headers: Record<string, string> = {}): Response {
+  return Response.json(body, { status, headers: {
+    ...responseHeaders,
+    "Server-Timing": `app;dur=${durationMs}`,
+    "Traceparent": traceparent,
+    "X-Request-Id": requestId,
+    ...headers,
+  } });
 }

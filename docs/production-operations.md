@@ -16,7 +16,19 @@ This is a configuration readiness check, not a dependency reachability probe. Pr
 
 Flight and location search endpoints emit one JSON completion event per request. Events contain a timestamp, severity, bounded route name, HTTP method and status, opaque request ID, bounded outcome code, and duration. The same request ID is returned in `X-Request-Id` and the response body for support correlation.
 
+Endpoints accept a valid W3C `traceparent`, preserve its trace ID and sampling flag, create a fresh server span ID, and return the new context. Invalid/all-zero contexts are discarded and replaced. Completion logs contain only trace/span IDs, while `Server-Timing: app;dur=...` exposes server duration for browser diagnostics. No baggage or arbitrary trace attributes are accepted.
+
 Events intentionally exclude client addresses, search terms, airport pairs, dates, provider payloads, credentials, and exception messages. Platform log drains may derive request counts, error ratios, latency distributions, rate-limit counts, and provider-unavailability alerts from `api.request.completed`. External error tracking still requires a separately approved service and credentials.
+
+Recommended initial alerts after connecting a log/metrics backend:
+
+- availability: `status >= 500` above 5% for five minutes;
+- provider degradation: `outcome` in `upstream`, `timeout`, or `provider-misconfigured` above 2% for ten minutes;
+- abuse or exhausted quota: `request-rate-limit` above 10% for five minutes;
+- latency: p95 `durationMs` above 2,000 ms for ten minutes;
+- readiness: two consecutive non-200 `/api/health` probes.
+
+Tune thresholds only from observed traffic and record every change. Avoid user-controlled fields in metric labels to prevent cardinality and privacy failures.
 
 Repeated retryable Amadeus failures open an instance-local circuit for 30 seconds. During that window searches fail fast with the existing safe upstream failure contract. A single half-open probe restores service after recovery; operators should alert on sustained `upstream` outcomes across instances.
 
