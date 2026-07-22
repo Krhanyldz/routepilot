@@ -10,7 +10,13 @@
 
 Deployment health checks should poll this endpoint and remove instances returning `503` from service. The endpoint is dynamic and carries `Cache-Control: no-store`.
 
-This is a configuration readiness check, not a dependency reachability probe. Provider and Redis runtime failures remain visible through the live search endpoint until production telemetry is connected.
+This is a configuration readiness check, not a dependency reachability probe. Provider and Redis runtime failures remain visible through structured live-search completion events.
+
+## Structured runtime events
+
+Flight and location search endpoints emit one JSON completion event per request. Events contain a timestamp, severity, bounded route name, HTTP method and status, opaque request ID, bounded outcome code, and duration. The same request ID is returned in `X-Request-Id` and the response body for support correlation.
+
+Events intentionally exclude client addresses, search terms, airport pairs, dates, provider payloads, credentials, and exception messages. Platform log drains may derive request counts, error ratios, latency distributions, rate-limit counts, and provider-unavailability alerts from `api.request.completed`. External error tracking still requires a separately approved service and credentials.
 
 ## Browser security baseline
 

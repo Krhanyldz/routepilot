@@ -16,6 +16,7 @@ describe("POST /api/flights/search", () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toMatchObject({ status: "unavailable", reason: "live-mode-disabled" });
     expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it("rejects invalid JSON, unsupported content types, and oversized payloads", async () => {
