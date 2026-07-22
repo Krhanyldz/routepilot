@@ -47,7 +47,9 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
   await chooseAirport(page, "Destination", "Antalya");
   await page.getByRole("button", { name: "Search" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("Too many searches. Please wait a moment and try again.");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Too many searches" }),
+  ).toHaveText("Too many searches. Please wait a moment and try again.");
   await expect(page.getByText("private detail")).toHaveCount(0);
 });
 
