@@ -44,3 +44,25 @@ Before switching `ROUTE_DATA_MODE` to `live`:
 3. Confirm the ingress overwrites `X-Forwarded-For`.
 4. Confirm `/api/health` returns `200 ready`.
 5. Exercise a live search and verify provider failures do not expose upstream messages.
+6. Run `EXPECTED_ROUTE_DATA_MODE=live npm run smoke -- https://deployment.example` against the deployment URL.
+
+The smoke command refuses non-HTTPS remote targets. It verifies home availability, CSP/HSTS/frame protections, readiness mode, non-cacheable health responses, safe invalid-input behavior, and request-ID correlation without consuming a paid provider search.
+
+## Release and rollback
+
+1. Deploy an immutable build from a green `main` commit to a preview environment.
+2. Configure secrets through the hosting platform; never copy them into build arguments or repository files.
+3. Run the live-mode smoke contract against preview.
+4. Promote that exact build to production and repeat the smoke contract.
+5. If readiness, headers, validation, or user search fails, immediately route traffic back to the last known-good immutable deployment. Do not attempt an in-place production repair.
+6. Preserve the failing deployment logs and request IDs, open an incident record, and reproduce on preview before retrying promotion.
+
+Database restoration is currently not applicable because RoutePilot has no persistent user or booking store. Provider data is fetched live and demo knowledge-graph data is versioned in Git. When persistence is introduced, backup encryption, restore testing, RPO, RTO, and migration rollback become release blockers.
+
+## Disaster recovery ownership
+
+- **Provider outage:** circuit breaker fails fast; keep the site available with explicit provider-unavailable responses. Never substitute demo fares in live mode.
+- **Rate-limit store outage:** live production searches fail closed while static pages and health diagnostics remain available.
+- **Bad application release:** roll back to the previous immutable deployment and verify it with the same smoke command.
+- **Credential exposure:** revoke and rotate the affected provider/Redis credential, redeploy, review structured logs for abuse, and invalidate any derived secrets.
+- **Hosting-region outage:** use the hosting platform's regional recovery capabilities; selecting and approving the production platform and regions is a deployment decision.

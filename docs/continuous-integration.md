@@ -4,7 +4,7 @@ RoutePilot runs GitHub Actions for every pull request and every push to `main`.
 
 ## Required gates
 
-The quality job installs the committed lockfile with `npm ci`, then runs lint, TypeScript validation, deterministic tests, and a high-severity production dependency audit. The production-build job runs only after quality succeeds. The browser end-to-end job runs after both gates, installs only Chromium, starts RoutePilot in isolated live mode, and exercises provider APIs through deterministic browser-level mocks.
+The quality job installs the committed lockfile with `npm ci`, then runs lint, TypeScript validation, deterministic tests, and a high-severity production dependency audit. The production-build job runs only after quality succeeds, starts the built artifact in explicit demo mode, and verifies the deployment smoke contract. The browser end-to-end job runs after both gates, installs only Chromium, starts RoutePilot in isolated live mode, and exercises provider APIs through deterministic browser-level mocks.
 
 Both jobs:
 
@@ -28,6 +28,7 @@ npm ci
 npm run check
 npm run test:e2e
 npm run audit:production
+npm run smoke -- https://your-deployment.example
 ```
 
-Repository branch protection should require both `Quality and security` and `Production build` checks before merging. Branch protection is a GitHub repository administration setting and is not changed by this code milestone.
+Repository branch protection requires `Quality and security`, `Production build`, and `Browser end-to-end`. The production build gate includes the smoke contract.
