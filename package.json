@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "smoke": "node scripts/smoke-production.mjs",
+    "load:preview": "node scripts/load-preview.mjs",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "audit:production": "npm audit --omit=dev --audit-level=high"
   },

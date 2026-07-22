@@ -60,6 +60,30 @@ Before switching `ROUTE_DATA_MODE` to `live`:
 7. Exercise a live search and verify provider failures do not expose upstream messages.
 8. Run `EXPECTED_ROUTE_DATA_MODE=live npm run smoke -- https://deployment.example` against the deployment URL.
 
+## Preview load evidence
+
+Run the bounded readiness-path load probe only against a non-production preview:
+
+```bash
+ROUTEPILOT_LOAD_ACK=preview-only \
+LOAD_REQUESTS=1000 \
+LOAD_CONCURRENCY=25 \
+LOAD_MAX_P95_MS=2000 \
+LOAD_MAX_ERROR_RATE=0.01 \
+npm run load:preview -- https://preview.example
+```
+
+The probe is intentionally capped at 10,000 requests and 100 concurrent workers, requires HTTPS remotely, and refuses any remote target without the exact preview acknowledgement. It exercises dynamic application/readiness capacity without consuming Amadeus quota. Record its JSON output with the release commit. A paid-provider load test is not automated: its traffic volume and billing exposure require explicit Amadeus account approval and must remain within both configured provider budgets.
+
+## Mechanical public-beta release (under 30 minutes)
+
+1. **0–5 min:** create an immutable preview from a green `main` commit and apply the documented server-only environment variables.
+2. **5–10 min:** verify `/api/health`, run the live smoke contract, and perform one real airport lookup and flight search.
+3. **10–18 min:** run the bounded preview load probe and confirm the JSON thresholds, provider-budget telemetry, and alert delivery.
+4. **18–23 min:** promote the exact preview artifact; do not rebuild from another commit.
+5. **23–27 min:** repeat the live smoke contract against production and confirm uptime monitoring.
+6. **27–30 min:** record commit, deployment ID, smoke/load evidence, operator, and rollback target. Roll back immediately if any gate fails.
+
 The smoke command refuses non-HTTPS remote targets. It verifies home availability, CSP/HSTS/frame protections, readiness mode, non-cacheable health responses, safe invalid-input behavior, and request-ID correlation without consuming a paid provider search.
 
 ## Release and rollback
