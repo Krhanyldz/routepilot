@@ -3,12 +3,16 @@ export interface RateLimitDecision {
   retryAfterSeconds: number;
 }
 
+export interface RequestRateLimiter {
+  consume(key: string): Promise<RateLimitDecision>;
+}
+
 interface Bucket {
   count: number;
   resetAtMs: number;
 }
 
-export class FixedWindowRateLimiter {
+export class FixedWindowRateLimiter implements RequestRateLimiter {
   private readonly buckets = new Map<string, Bucket>();
 
   constructor(
@@ -20,7 +24,7 @@ export class FixedWindowRateLimiter {
     if (!Number.isSafeInteger(windowMs) || windowMs < 1) throw new Error("windowMs must be positive");
   }
 
-  consume(key: string): RateLimitDecision {
+  async consume(key: string): Promise<RateLimitDecision> {
     const now = this.now();
     const current = this.buckets.get(key);
     const bucket = !current || current.resetAtMs <= now
