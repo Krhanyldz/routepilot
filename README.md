@@ -35,10 +35,12 @@ domain models ← all non-UI layers
 ```
 
 - `src/domain`: normalized locations, offers, routes, constraints, and the supported `flight`, `train`, and `ferry` modes.
+- `src/domain/location.ts`: validated canonical cities, airports, railway stations, and ferry terminals for the Global Location Engine.
 - `src/providers/interfaces.ts`: contracts for flight, train, ferry, and location search.
 - `src/providers/demo`: visibly labeled local demo implementations and fixtures.
 - `src/providers/aggregate.ts`: merges normalized results from allowed provider types.
 - `src/routing`: Haversine-based nearby discovery and constrained graph search.
+- `src/routing/candidate-departures.ts`: provider-independent candidate discovery by radius, ground duration, mode, distance, and positioning cost.
 - `src/knowledge-graph`: validates, queries, and atomically persists versioned transport topology snapshots independently of provider fares.
 - `src/pricing`: Deutschlandticket and positioning-price policy.
 - `src/explanations`: deterministic rules explaining savings, speed tradeoffs, rail savings, ticket effects, and self-transfer risk.
@@ -81,6 +83,7 @@ npm run build
 - [AI strategy](docs/ai-strategy.md)
 - [AI orchestration](docs/ai-orchestration.md)
 - [Data provider strategy](docs/data-provider-strategy.md)
+- [Global Location Engine](docs/location-engine.md)
 
 ## Current limitations
 
