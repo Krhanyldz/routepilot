@@ -1,16 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { GET } from "./route";
-
-const originalMode = process.env.ROUTE_DATA_MODE;
-
-afterEach(() => {
-  if (originalMode === undefined) delete process.env.ROUTE_DATA_MODE;
-  else process.env.ROUTE_DATA_MODE = originalMode;
-});
 
 describe("GET /api/locations/search", () => {
   it("returns explicit unavailable state without Travelpayouts configuration", async () => {
-    process.env.ROUTE_DATA_MODE = "demo";
     const response = await GET(request("?query=Hamburg&kind=airport"));
     expect(response.status).toBe(503);
     expect(response.headers.get("cache-control")).toBe("no-store");

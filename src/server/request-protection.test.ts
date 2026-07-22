@@ -6,21 +6,20 @@ const limiter: RequestRateLimiter = { consume: vi.fn() };
 const factories = { memory: vi.fn(() => limiter), upstash: vi.fn(() => limiter) };
 
 describe("request protection configuration", () => {
-  it("uses isolated memory limiting outside production live mode", () => {
-    const protection = createRequestProtection({ NODE_ENV: "test", ROUTE_DATA_MODE: "demo" }, factories);
+  it("uses isolated memory limiting outside Vercel", () => {
+    const protection = createRequestProtection({ NODE_ENV: "test" }, factories);
     expect(protection.limiter).toBe(limiter);
     expect(protection.identify(request("203.0.113.10"))).toBe("203.0.113.10");
   });
 
-  it("requires distributed limiting for production live inventory", () => {
-    expect(() => createRequestProtection({ NODE_ENV: "production", ROUTE_DATA_MODE: "live" }, factories))
+  it("requires distributed limiting for deployed Vercel traffic", () => {
+    expect(() => createRequestProtection({ VERCEL: "1" }, factories))
       .toThrow(RequestProtectionConfigurationError);
   });
 
   it("configures Upstash and hashes client identifiers", () => {
     const environment = {
-      NODE_ENV: "production",
-      ROUTE_DATA_MODE: "live",
+      VERCEL: "1",
       RATE_LIMIT_BACKEND: "upstash",
       UPSTASH_REDIS_REST_URL: "https://redis.example",
       UPSTASH_REDIS_REST_TOKEN: "token",

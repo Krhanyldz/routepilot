@@ -39,11 +39,11 @@ test("selects canonical airports and renders a verified live offer", async ({ pa
   expect(submittedBody).toMatchObject({ originIataCode: "LON", destinationIataCode: "TYO", adults: 1 });
 });
 
-test("shows a safe message when the provider budget is exhausted", async ({ page }) => {
+test("shows a safe message when live flight capability is unavailable", async ({ page }) => {
   await page.route("**/api/flights/search", (route) => route.fulfill({
-    status: 429,
+    status: 503,
     contentType: "application/json",
-    body: JSON.stringify({ status: "failure", reason: "provider-budget-exhausted", message: "private detail" }),
+    body: JSON.stringify({ status: "unavailable", reason: "provider-capability-unavailable", message: "private detail" }),
   }));
   await page.goto("/");
   await chooseAirport(page, "Origin", "London");
@@ -52,8 +52,8 @@ test("shows a safe message when the provider budget is exhausted", async ({ page
   await page.getByRole("button", { name: "Search" }).click();
 
   await expect(
-    page.getByRole("alert").filter({ hasText: "Search capacity is busy" }),
-  ).toHaveText("Search capacity is busy. Please wait a moment and try again.");
+    page.getByRole("alert").filter({ hasText: "Live flight results are unavailable" }),
+  ).toContainText("TravelPayouts Flight Search API access");
   await expect(page.getByText("private detail")).toHaveCount(0);
 });
 
@@ -69,12 +69,12 @@ function liveResponse() {
   return {
     status: "success",
     result: {
-      providerId: "amadeus-self-service",
+      providerId: "contract-test-provider",
       fetchedAt: "2026-07-22T12:00:00.000Z",
       warnings: ["Limited provider coverage"],
       coverage: "provider-limited",
       offers: [{
-        id: "offer-1", providerId: "amadeus-self-service", dataSource: "live", sourceRecordId: "1",
+        id: "offer-1", providerId: "contract-test-provider", dataSource: "live", sourceRecordId: "1",
         fetchedAt: "2026-07-22T12:00:00.000Z", currencyCode: "EUR", totalPrice: "99.40",
         totalDurationMinutes: 180, transfers: 0, validatingAirlineCodes: ["XQ"],
         segments: [{ id: "segment-1", departureIataCode: "HAM", departureAt: "2026-09-10T08:00:00+02:00", arrivalIataCode: "AYT", arrivalAt: "2026-09-10T12:00:00+03:00", marketingCarrierCode: "XQ", flightNumber: "101", durationMinutes: 180 }],

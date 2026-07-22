@@ -1,8 +1,20 @@
 # Live Flight Search API
 
-`POST /api/flights/search` is the server-only application boundary for live flight inventory. It is dynamic, uses the Node.js runtime, and never exposes Amadeus credentials to the browser.
+`POST /api/flights/search` is the provider-independent application boundary for real-time flight inventory. The boundary remains available so an approved provider adapter can be added without changing routing or UI business logic.
 
-## Request
+## Current capability
+
+TravelPayouts is RoutePilot's only flight-data provider. The configured Data API supplies cached reference and deal data, not the real-time priced itineraries required by `LiveFlightSearchProvider`. RoutePilot therefore returns:
+
+```json
+{ "status": "unavailable", "reason": "provider-capability-unavailable" }
+```
+
+with HTTP `503` for every otherwise valid flight search. It never converts cached Data API prices into live offers and never falls back to demo fares.
+
+TravelPayouts offers a separate Aviasales Flight Search API, but access requires provider approval and additional integration metadata. Until that access is granted, real-time flight search is an explicit public-beta blocker.
+
+## Request contract
 
 The endpoint accepts `application/json` with a maximum encoded body size of 16 KiB:
 
@@ -19,37 +31,25 @@ The endpoint accepts `application/json` with a maximum encoded body size of 16 K
 }
 ```
 
-Unknown fields and invalid types, airport codes, calendar dates, date order, traveler counts, currency codes, or result limits are rejected before any provider call.
+Unknown fields and invalid types, airport codes, dates, date order, traveler counts, currency codes, or result limits are rejected before provider orchestration.
 
 ## Response states
 
-- `200 success`: normalized live provider evidence.
+- `200 success`: reserved for normalized, verified live provider evidence.
 - `400 invalid-request`: invalid JSON or structured input.
 - `413 payload-too-large`: body exceeds the fixed limit.
 - `415 unsupported-content-type`: request is not JSON.
-- `429 request-rate-limit`: the request window is exhausted; includes `Retry-After`.
-- `502 failure`: upstream or malformed provider response.
-- `504 timeout`: provider deadline exceeded.
-- `503 unavailable`: live mode, provider credentials, request protection, or the distributed rate-limit service is unavailable.
+- `429 request-rate-limit`: the request window is exhausted.
+- `503 provider-capability-unavailable`: TravelPayouts live search access is not integrated.
+- `503 request-protection-unavailable`: distributed protection is unavailable on Vercel.
 
-Every response includes a request ID, `Cache-Control: no-store`, and `X-Content-Type-Options: nosniff`. Provider details and secret-bearing upstream messages are not returned.
+Every response includes correlation headers and `Cache-Control: no-store`. Provider secrets and upstream messages are never returned.
 
-## Demo and live separation
+## Production request protection
 
-When `ROUTE_DATA_MODE=demo`, this endpoint returns `live-mode-disabled`. It does not return or rank deterministic demo fixtures as if they were live inventory. When live configuration is invalid, it returns `provider-misconfigured` without exposing which credential is absent.
+Vercel deployments fail closed unless `RATE_LIMIT_BACKEND=upstash` and the Upstash credentials are valid. Client addresses are HMAC-SHA256 pseudonyms before leaving the process. Local development may use the bounded in-memory backend.
 
-## Rate limiting
-
-The provider-independent request-protection contract supports two backends:
-
-- `memory`: a bounded fixed window for local development and deterministic demo environments;
-- `upstash`: a shared sliding window backed by Upstash Redis for multi-instance and serverless deployment.
-
-Production live mode fails closed unless `RATE_LIMIT_BACKEND=upstash` and all Upstash credentials are configured. A Redis failure returns `503 request-protection-unavailable`; it never silently falls back to process memory. Client addresses are HMAC-SHA256 pseudonyms before they leave the application process, using a deployment-only `RATE_LIMIT_KEY_SECRET` of at least 32 characters.
-
-The endpoint expects the production ingress proxy to overwrite `X-Forwarded-For`; deployments must not trust a directly client-controlled forwarded header. Flight and location provider searches share a limit of 20 requests per minute per pseudonymous client identifier.
-
-Required production live variables:
+Required Vercel variables:
 
 ```text
 RATE_LIMIT_BACKEND=upstash
@@ -58,6 +58,4 @@ UPSTASH_REDIS_REST_TOKEN=...
 RATE_LIMIT_KEY_SECRET=...
 ```
 
-## Integration status
-
-The public page selects its experience from server-only `ROUTE_DATA_MODE`. Demo mode remains deterministic and visibly labeled. Live mode uses canonical airport autocomplete and submits only selected IATA codes to this endpoint; normalized offers retain live labels and provider coverage warnings. Enabling the live experience still requires Amadeus and Upstash credentials.
+The existing provider contract must be implemented only after TravelPayouts grants Flight Search API access. The adapter must normalize provider evidence and must not alter the routing engine's public interfaces.

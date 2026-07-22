@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 
 const baseUrl = normalizeBaseUrl(process.argv[2] ?? process.env.ROUTEPILOT_BASE_URL);
-const expectedMode = process.env.EXPECTED_ROUTE_DATA_MODE ?? "demo";
-
 await waitUntilReachable(baseUrl);
 await verifyHome(baseUrl);
-await verifyReadiness(baseUrl, expectedMode);
+await verifyReadiness(baseUrl);
 await verifySafeValidation(baseUrl);
-console.log(JSON.stringify({ event: "smoke.completed", baseUrl, expectedMode, status: "passed" }));
+await verifyUnavailableFlightCapability(baseUrl);
+console.log(JSON.stringify({ event: "smoke.completed", baseUrl, status: "passed" }));
 
 function normalizeBaseUrl(value) {
   if (!value) throw new Error("Provide an HTTPS ROUTEPILOT_BASE_URL or a loopback URL as the first argument");
@@ -45,12 +44,12 @@ async function verifyHome(origin) {
   assert(response.headers.get("x-frame-options") === "DENY", "Home is missing frame denial");
 }
 
-async function verifyReadiness(origin, mode) {
+async function verifyReadiness(origin) {
   const response = await fetch(`${origin}/api/health`, { redirect: "error", signal: AbortSignal.timeout(5_000) });
   const body = await safeJson(response);
   assert(response.status === 200, `Readiness returned HTTP ${response.status}`);
   assert(body?.status === "ready", "Readiness did not report ready");
-  assert(body?.mode === mode, `Readiness mode was ${String(body?.mode)}, expected ${mode}`);
+  assert(body?.checks?.flightInventory === "unavailable", "Readiness hid the unavailable flight-search capability");
   assert(response.headers.get("cache-control") === "no-store", "Readiness response may be cached");
 }
 
@@ -69,7 +68,20 @@ async function verifySafeValidation(origin) {
   assert(response.headers.get("x-request-id") === body.requestId, "Request correlation headers do not match");
   assert(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/.test(response.headers.get("traceparent") ?? ""), "Trace context is missing or malformed");
   assert(/^app;dur=\d+(\.\d+)?$/.test(response.headers.get("server-timing") ?? ""), "Server timing is missing or malformed");
-  assert(!JSON.stringify(body).includes("Amadeus"), "Invalid search exposed provider details");
+  assert(!JSON.stringify(body).includes("TravelPayouts"), "Invalid search exposed provider details");
+}
+
+async function verifyUnavailableFlightCapability(origin) {
+  const response = await fetch(`${origin}/api/flights/search`, {
+    method: "POST",
+    redirect: "error",
+    headers: { "Content-Type": "application/json", "X-Forwarded-For": crypto.randomUUID() },
+    body: JSON.stringify({ originIataCode: "LON", destinationIataCode: "TYO", departureDate: "2026-09-10", adults: 1 }),
+    signal: AbortSignal.timeout(5_000),
+  });
+  const body = await safeJson(response);
+  assert(response.status === 503, `Unavailable flight search returned HTTP ${response.status}`);
+  assert(body?.reason === "provider-capability-unavailable", "Unavailable flight search did not disclose the missing capability");
 }
 
 async function safeJson(response) {

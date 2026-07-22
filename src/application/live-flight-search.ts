@@ -7,7 +7,7 @@ import {
 
 export type LiveFlightSearchOutcome =
   | { status: "success"; result: LiveFlightSearchResult }
-  | { status: "unavailable"; reason: "live-mode-disabled" | "provider-misconfigured" }
+  | { status: "unavailable"; reason: "provider-capability-unavailable" | "provider-misconfigured" }
   | { status: "failure"; reason: "rate-limit" | "timeout" | "upstream" | "invalid-response" };
 
 export interface LiveFlightSearchDependencies {
@@ -19,7 +19,7 @@ export async function executeLiveFlightSearch(
   query: LiveFlightSearchQuery,
   dependencies: LiveFlightSearchDependencies,
 ): Promise<LiveFlightSearchOutcome> {
-  if (!dependencies.configured) return { status: "unavailable", reason: "live-mode-disabled" };
+  if (!dependencies.configured) return { status: "unavailable", reason: "provider-capability-unavailable" };
   if (!dependencies.provider) return { status: "unavailable", reason: "provider-misconfigured" };
   try {
     return { status: "success", result: await dependencies.provider.searchFlights(query) };

@@ -24,7 +24,7 @@ describe("CI workflow contract", () => {
     expect(workflow).toContain("npx playwright install --with-deps chromium");
     expect(workflow).toContain("npm run test:e2e");
     expect(workflow).toContain("npm run smoke -- http://127.0.0.1:3101");
-    expect(workflow).toContain("ROUTE_DATA_MODE=demo TRAVELPAYOUTS_API_TOKEN=ci-readiness-only npm run start");
+    expect(workflow).toContain("TRAVELPAYOUTS_API_TOKEN=ci-readiness-only npm run start");
     expect(workflow).toContain("actions/upload-artifact@v7");
   });
 });

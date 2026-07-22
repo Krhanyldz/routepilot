@@ -55,7 +55,7 @@ jobs:
         run: npm run build
       - name: Run production smoke contract
         run: |
-          ROUTE_DATA_MODE=demo TRAVELPAYOUTS_API_TOKEN=ci-readiness-only npm run start -- --hostname 127.0.0.1 --port 3101 > /tmp/routepilot-server.log 2>&1 &
+          TRAVELPAYOUTS_API_TOKEN=ci-readiness-only npm run start -- --hostname 127.0.0.1 --port 3101 > /tmp/routepilot-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           npm run smoke -- http://127.0.0.1:3101

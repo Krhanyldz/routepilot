@@ -1,17 +1,13 @@
 import { executeLiveFlightSearch, parseLiveFlightSearchQuery } from "@/application/live-flight-search";
 import { LiveFlightProviderError } from "@/providers/live-flight";
-import { configureFlightInventory } from "@/providers/production/amadeus";
 import { RequestProtectionConfigurationError, RequestProtectionGate } from "@/server/request-protection";
 import { apiOutcome, createTraceContext, observeApiRequest } from "@/server/api-observability";
-import { ProviderBudgetGate } from "@/server/provider-budget";
-import { guardProviderRequest } from "@/server/provider-budget-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maximumBodyBytes = 16_384;
 const requestProtection = new RequestProtectionGate();
-const providerBudget = new ProviderBudgetGate();
 const responseHeaders = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
@@ -53,19 +49,7 @@ export async function POST(request: Request): Promise<Response> {
       return respond({ status: "failure", reason: "payload-too-large", requestId }, 413);
     }
     const query = parseLiveFlightSearchQuery(JSON.parse(body) as unknown);
-    const inventory = safeInventoryConfiguration();
-    if (inventory.provider) {
-      const budget = await guardProviderRequest(providerBudget, "flight-offers");
-      if (budget.status === "rejected") {
-        return respond({ status: "failure", reason: budget.reason, requestId }, budget.httpStatus, {
-          "Retry-After": String(budget.retryAfterSeconds),
-        });
-      }
-      if (budget.status === "unavailable") {
-        return respond({ status: "unavailable", reason: budget.reason, requestId }, budget.httpStatus);
-      }
-    }
-    const outcome = await executeLiveFlightSearch(query, inventory);
+    const outcome = await executeLiveFlightSearch(query, { configured: false, provider: null });
     if (outcome.status === "success") return respond({ ...outcome, requestId }, 200);
     if (outcome.status === "unavailable") return respond({ ...outcome, requestId }, 503);
     const status = outcome.reason === "timeout" ? 504 : 502;
@@ -75,15 +59,6 @@ export async function POST(request: Request): Promise<Response> {
       return respond({ status: "failure", reason: "invalid-request", requestId }, 400);
     }
     return respond({ status: "failure", reason: "internal-error", requestId }, 500);
-  }
-}
-
-function safeInventoryConfiguration(): { configured: boolean; provider: ReturnType<typeof configureFlightInventory>["liveProvider"] } {
-  try {
-    const inventory = configureFlightInventory();
-    return { configured: inventory.mode === "live", provider: inventory.liveProvider };
-  } catch {
-    return { configured: true, provider: null };
   }
 }
 

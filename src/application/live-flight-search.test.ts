@@ -5,9 +5,9 @@ import { executeLiveFlightSearch, parseLiveFlightSearchQuery } from "./live-flig
 const query = { originIataCode: "HAM", destinationIataCode: "AYT", departureDate: "2026-09-10", adults: 1 };
 
 describe("live flight search application", () => {
-  it("returns an honest unavailable state when live mode is disabled", async () => {
+  it("returns an honest unavailable state when the provider capability is unavailable", async () => {
     await expect(executeLiveFlightSearch(query, { configured: false, provider: null })).resolves.toEqual({
-      status: "unavailable", reason: "live-mode-disabled",
+      status: "unavailable", reason: "provider-capability-unavailable",
     });
   });
 
