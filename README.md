@@ -2,7 +2,7 @@
 
 RoutePilot is a provider-independent multimodal routing MVP. It demonstrates how including the full positioning cost to a nearby departure airport can still reveal a substantially cheaper journey.
 
-All current prices, schedules, and locations are deterministic demo data. There are no live transport API calls.
+Demo mode uses visibly labeled deterministic prices, schedules, and locations. Opt-in live mode uses protected Amadeus airport autocomplete and flight inventory endpoints; it never mixes demo fares into live results.
 
 ## Demo scenarios
 
@@ -98,7 +98,7 @@ npm run build
 ## Current limitations
 
 - All fares, durations, and availability are fixed demo records rather than live inventory.
-- The Amadeus live adapter foundation is not wired into the UI or deterministic route search yet.
+- Live mode currently searches flights only; full live multimodal optimization still requires rail, ferry, and positioning inventory.
 - The live flight API requires deployment credentials and shared edge/distributed rate limiting before public high-volume use.
 - Distance radius is straight-line distance; it is not ground travel distance or duration.
 - Connection duration does not yet include configurable minimum connection or overnight buffers.

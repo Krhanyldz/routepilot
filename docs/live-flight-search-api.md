@@ -60,4 +60,4 @@ RATE_LIMIT_KEY_SECRET=...
 
 ## Integration status
 
-The API boundary and distributed request protection are ready and tested, but the current public page remains the labeled deterministic demo. Wiring public search controls to live inventory requires Amadeus test credentials, Upstash credentials, and canonical airport-to-IATA resolution in the application use case.
+The public page selects its experience from server-only `ROUTE_DATA_MODE`. Demo mode remains deterministic and visibly labeled. Live mode uses canonical airport autocomplete and submits only selected IATA codes to this endpoint; normalized offers retain live labels and provider coverage warnings. Enabling the live experience still requires Amadeus and Upstash credentials.
