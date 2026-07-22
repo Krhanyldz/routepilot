@@ -87,6 +87,7 @@ npm run build
 - [Global Location Engine](docs/location-engine.md)
 - [Amadeus Flight Provider](docs/amadeus-flight-provider.md)
 - [Dependency security](docs/dependency-security.md)
+- [Continuous integration](docs/continuous-integration.md)
 
 ## Current limitations
 

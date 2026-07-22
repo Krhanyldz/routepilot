@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "audit:production": "npm audit --omit=dev --audit-level=high"
+  },
+  "engines": {
+    "node": ">=24 <27"
   },
   "dependencies": {
     "next": "16.2.11",
