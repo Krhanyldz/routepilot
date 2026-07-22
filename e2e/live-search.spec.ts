@@ -25,6 +25,8 @@ test("selects canonical airports and renders a verified live offer", async ({ pa
 
   const response = await page.goto("/");
   expect(response?.headers()["x-frame-options"]).toBe("DENY");
+  expect(response?.headers()["strict-transport-security"]).toBe("max-age=31536000");
+  expect(response?.headers()["content-security-policy"]).toContain("object-src 'none'");
   await chooseAirport(page, "Origin", "Hamburg");
   await chooseAirport(page, "Destination", "Antalya");
   await page.getByRole("button", { name: "Search" }).click();
