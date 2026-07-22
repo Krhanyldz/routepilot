@@ -7,33 +7,37 @@ import {
   type LiveFlightSegment,
 } from "@/providers/live-flight";
 import type { AmadeusConfig } from "./config";
+import { AmadeusApiClient, AmadeusApiError } from "./client";
 
 type Fetch = typeof fetch;
-
-interface CachedToken {
-  value: string;
-  expiresAtMs: number;
-}
 
 export const AMADEUS_COVERAGE_WARNING =
   "Amadeus Self-Service coverage excludes some airlines and low-cost carriers; results are cheapest only among returned offers.";
 
 export class AmadeusFlightProvider implements LiveFlightSearchProvider {
   readonly id = "amadeus-self-service";
-  private token: CachedToken | undefined;
+  private readonly client: AmadeusApiClient;
 
   constructor(
-    private readonly config: AmadeusConfig,
-    private readonly fetchImpl: Fetch = fetch,
+    config: AmadeusConfig,
+    fetchImpl: Fetch = fetch,
     private readonly now: () => number = Date.now,
-  ) {}
+  ) {
+    this.client = new AmadeusApiClient(config, fetchImpl, now);
+  }
 
   async searchFlights(query: LiveFlightSearchQuery): Promise<LiveFlightSearchResult> {
     validateQuery(query);
     const fetchedAt = new Date(this.now()).toISOString();
-    const response = await this.requestWithRetry(() => this.authorizedGet("/v2/shopping/flight-offers", toSearchParams(query)));
-    const payload = await readJson(response);
-    if (!response.ok) throw responseError(response.status, payload);
+    let payload: unknown;
+    try {
+      payload = await this.client.get("/v2/shopping/flight-offers", toSearchParams(query));
+    } catch (error) {
+      if (error instanceof AmadeusApiError) {
+        throw new LiveFlightProviderError(error.code, error.message, error.retryable, { cause: error });
+      }
+      throw error;
+    }
     const records = getArray(payload, "data");
     return {
       providerId: this.id,
@@ -44,56 +48,6 @@ export class AmadeusFlightProvider implements LiveFlightSearchProvider {
     };
   }
 
-  private async authorizedGet(path: string, params: URLSearchParams): Promise<Response> {
-    const token = await this.getAccessToken();
-    return this.withTimeout(`${this.config.baseUrl}${path}?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  private async getAccessToken(): Promise<string> {
-    if (this.token && this.token.expiresAtMs - 60_000 > this.now()) return this.token.value;
-    const body = new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: this.config.clientId,
-      client_secret: this.config.clientSecret,
-    });
-    const response = await this.withTimeout(`${this.config.baseUrl}/v1/security/oauth2/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-    });
-    const payload = await readJson(response);
-    if (!response.ok) throw responseError(response.status, payload);
-    if (!isRecord(payload) || typeof payload.access_token !== "string" || typeof payload.expires_in !== "number") {
-      throw new LiveFlightProviderError("invalid-response", "Amadeus token response is malformed", false);
-    }
-    this.token = { value: payload.access_token, expiresAtMs: this.now() + payload.expires_in * 1_000 };
-    return this.token.value;
-  }
-
-  private async requestWithRetry(request: () => Promise<Response>): Promise<Response> {
-    let response = await request();
-    for (let attempt = 0; attempt < this.config.maxRetries && isTransient(response.status); attempt += 1) {
-      response = await request();
-    }
-    return response;
-  }
-
-  private async withTimeout(input: string, init: RequestInit): Promise<Response> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs);
-    try {
-      return await this.fetchImpl(input, { ...init, signal: controller.signal, cache: "no-store" });
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new LiveFlightProviderError("timeout", "Amadeus request timed out", true, { cause: error });
-      }
-      throw new LiveFlightProviderError("upstream", "Amadeus request failed", true, { cause: error });
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
 }
 
 function validateQuery(query: LiveFlightSearchQuery): void {
@@ -192,28 +146,6 @@ function normalizeSegment(value: unknown, id: string): LiveFlightSegment {
   };
 }
 
-async function readJson(response: Response): Promise<unknown> {
-  try { return await response.json(); } catch (error) {
-    throw new LiveFlightProviderError("invalid-response", "Amadeus returned non-JSON data", false, { cause: error });
-  }
-}
-
-function responseError(status: number, payload: unknown): LiveFlightProviderError {
-  const message = extractErrorMessage(payload) ?? `Amadeus returned HTTP ${status}`;
-  if (status === 400) return new LiveFlightProviderError("invalid-request", message, false);
-  if (status === 401 || status === 403) return new LiveFlightProviderError("authentication", message, false);
-  if (status === 429) return new LiveFlightProviderError("rate-limit", message, true);
-  return new LiveFlightProviderError("upstream", message, status >= 500);
-}
-
-function extractErrorMessage(payload: unknown): string | undefined {
-  if (!isRecord(payload)) return undefined;
-  if (typeof payload.error_description === "string") return payload.error_description;
-  if (Array.isArray(payload.errors) && isRecord(payload.errors[0]) && typeof payload.errors[0].detail === "string") return payload.errors[0].detail;
-  return undefined;
-}
-
-function isTransient(status: number): boolean { return status === 429 || status >= 500; }
 function isCalendarDate(value: string): boolean {
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);

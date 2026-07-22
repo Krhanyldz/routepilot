@@ -1,6 +1,6 @@
 # Amadeus Flight Provider
 
-RoutePilot includes a server-side Amadeus Self-Service adapter foundation for Flight Offers Search. It is not connected to the UI or current deterministic route flow yet, and no credentials are committed.
+RoutePilot includes server-side Amadeus Self-Service adapters for Flight Offers Search and Airport & City Search. Flight search is exposed only through the protected live API boundary; it is not connected to the public UI or current deterministic route flow yet, and no credentials are committed.
 
 ## Official API contract
 
@@ -8,7 +8,8 @@ The adapter follows the official Amadeus Self-Service flow:
 
 1. Obtain an OAuth2 client-credentials token with `POST /v1/security/oauth2/token`.
 2. Search with `GET /v2/shopping/flight-offers`.
-3. Send the access token as a bearer token.
+3. Resolve airports and cities with `GET /v1/reference-data/locations`.
+4. Send the access token as a bearer token.
 
 Test uses `https://test.api.amadeus.com`; production uses `https://api.amadeus.com`. Tokens are cached in memory until one minute before their reported expiry. Amadeus currently documents token validity as 30 minutes.
 
@@ -37,6 +38,14 @@ The adapter normalizes whole Amadeus itinerary offers rather than breaking a pri
 
 Malformed required fields are rejected. The adapter does not invent baggage, booking protection, refundability, deep links, or missing prices.
 
+## Airport and city normalization
+
+`AmadeusLocationProvider` implements RoutePilot's provider-independent `AirportSearchProvider` and `GeocodingProvider` contracts. It maps provider records to canonical city and airport entities with stable IDs, coordinates, IATA codes, aliases, source metadata, and retrieval timestamps.
+
+Amadeus returns a UTC offset rather than an IANA timezone identifier. RoutePilot derives the IANA timezone deterministically from the returned coordinates using the bundled `tz-lookup` dataset; it neither invents a timezone nor performs an untracked second API request. Invalid coordinates, country codes, IATA codes, subtypes, or response shapes fail closed.
+
+The provider endpoint accepts one country filter per request. A RoutePilot search containing multiple countries performs one request per unique country, deduplicates by canonical ID, and then applies the requested result limit.
+
 ## Operational behavior
 
 - Requests have an eight-second total timeout.
@@ -51,8 +60,8 @@ Amadeus documents that Self-Service Flight Offers Search does not include some l
 
 ## Current limitations and next steps
 
-- The adapter is not wired into an application search endpoint.
+- Airport and city search is not yet exposed through a public autocomplete endpoint.
 - No real credential or live request is exercised in automated tests.
 - Baggage and detailed fare rules require additional Amadeus pricing/confirmation flows.
-- Rate-limit headers, `Retry-After`, shared cache, request coalescing, circuit breaking, and health telemetry remain future work.
+- Provider response caching, request coalescing, circuit breaking, and runtime health telemetry remain future work.
 - Booking redirects are not generated; unsupported deep links must not be fabricated.
