@@ -38,7 +38,7 @@ domain models ← all non-UI layers
 - `src/domain/location.ts`: validated canonical cities, airports, railway stations, and ferry terminals for the Global Location Engine.
 - `src/providers/interfaces.ts`: contracts for flight, train, ferry, and location search.
 - `src/providers/demo`: visibly labeled local demo implementations and fixtures.
-- `src/providers/production/amadeus`: opt-in server-side OAuth and Flight Offers Search adapter foundation.
+- `src/providers/production/amadeus`: opt-in server-side OAuth, Flight Offers Search, and canonical Airport & City Search adapters.
 - `src/providers/aggregate.ts`: merges normalized results from allowed provider types.
 - `src/routing`: Haversine-based nearby discovery and constrained graph search.
 - `src/routing/candidate-departures.ts`: provider-independent candidate discovery by radius, ground duration, mode, distance, and positioning cost.
