@@ -17,7 +17,7 @@ The CI workflow is covered by a deterministic contract test so required commands
 
 ## Dependency updates
 
-Dependabot opens grouped weekly pull requests for production and development npm dependencies. Dependabot PRs must pass the same quality, audit, and build gates; they are not auto-merged.
+Dependabot groups compatible minor and patch npm version updates into separate weekly production and development pull requests. Major version updates remain individual pull requests so incompatible toolchain changes cannot be bundled together. Security updates remain independent of this version-update grouping. Every Dependabot pull request must pass the same quality, audit, and build gates; updates are not auto-merged.
 
 ## Local parity
 
