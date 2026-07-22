@@ -17,9 +17,12 @@ describe("CI workflow contract", () => {
 
     expect(workflow).toContain("npm audit --omit=dev --audit-level=high");
     expect(workflow).toContain("permissions:\n  contents: read");
-    expect(workflow.match(/actions\/checkout@v7/g)).toHaveLength(2);
-    expect(workflow.match(/actions\/setup-node@v7/g)).toHaveLength(2);
+    expect(workflow.match(/actions\/checkout@v7/g)).toHaveLength(3);
+    expect(workflow.match(/actions\/setup-node@v7/g)).toHaveLength(3);
     expect(workflow.match(/timeout-minutes: 15/g)).toHaveLength(2);
-    expect(workflow.match(/node-version-file: .nvmrc/g)).toHaveLength(2);
+    expect(workflow.match(/node-version-file: .nvmrc/g)).toHaveLength(3);
+    expect(workflow).toContain("npx playwright install --with-deps chromium");
+    expect(workflow).toContain("npm run test:e2e");
+    expect(workflow).toContain("actions/upload-artifact@v7");
   });
 });

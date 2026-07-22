@@ -4,7 +4,7 @@ RoutePilot runs GitHub Actions for every pull request and every push to `main`.
 
 ## Required gates
 
-The quality job installs the committed lockfile with `npm ci`, then runs lint, TypeScript validation, deterministic tests, and a high-severity production dependency audit. The production-build job runs only after quality succeeds.
+The quality job installs the committed lockfile with `npm ci`, then runs lint, TypeScript validation, deterministic tests, and a high-severity production dependency audit. The production-build job runs only after quality succeeds. The browser end-to-end job runs after both gates, installs only Chromium, starts RoutePilot in isolated live mode, and exercises provider APIs through deterministic browser-level mocks.
 
 Both jobs:
 
@@ -13,7 +13,7 @@ Both jobs:
 - use only read access to repository contents; and
 - cancel superseded runs for the same branch or pull request.
 
-The CI workflow is covered by a deterministic contract test so required commands and safety settings cannot be removed accidentally without changing tests.
+The CI workflow is covered by a deterministic contract test so required commands, browser coverage, and safety settings cannot be removed accidentally without changing tests. Playwright reports are retained for 14 days, including failure traces and screenshots where available.
 
 ## Dependency updates
 
@@ -26,6 +26,7 @@ Use Node 24 and run:
 ```bash
 npm ci
 npm run check
+npm run test:e2e
 npm run audit:production
 ```
 
