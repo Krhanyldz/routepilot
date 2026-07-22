@@ -5,7 +5,12 @@ const EARTH_RADIUS_KM = 6_371;
 
 const toRadians = (degrees: number): number => degrees * (Math.PI / 180);
 
-export function haversineDistanceKm(a: Location, b: Location): number {
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export function haversineDistanceKm(a: Coordinates, b: Coordinates): number {
   const latitudeDelta = toRadians(b.latitude - a.latitude);
   const longitudeDelta = toRadians(b.longitude - a.longitude);
   const aLatitude = toRadians(a.latitude);
