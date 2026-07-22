@@ -6,6 +6,12 @@ interface DistributedLimitClient {
   limit(identifier: string): Promise<{ success: boolean; reset: number }>;
 }
 
+export interface DistributedRateLimitPolicy {
+  maximumRequests: number;
+  window: `${number} ms` | `${number} s`;
+  prefix: string;
+}
+
 export class DistributedRateLimiter implements RequestRateLimiter {
   constructor(
     private readonly client: DistributedLimitClient,
@@ -21,12 +27,20 @@ export class DistributedRateLimiter implements RequestRateLimiter {
   }
 }
 
-export function createUpstashRateLimiter(url: string, token: string): RequestRateLimiter {
+export function createUpstashRateLimiter(
+  url: string,
+  token: string,
+  policy: DistributedRateLimitPolicy = {
+    maximumRequests: 20,
+    window: "60 s",
+    prefix: "routepilot:client-search",
+  },
+): RequestRateLimiter {
   const redis = new Redis({ url, token });
   const client = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(20, "60 s"),
-    prefix: "routepilot:provider-search",
+    limiter: Ratelimit.slidingWindow(policy.maximumRequests, policy.window),
+    prefix: policy.prefix,
     analytics: false,
     timeout: 0,
   });

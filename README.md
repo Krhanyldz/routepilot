@@ -96,12 +96,13 @@ npm run smoke -- https://your-deployment.example
 - [Live Location Search API](docs/live-location-search-api.md)
 - [Production operations](docs/production-operations.md)
 - [Security review](docs/security-review.md)
+- [Release candidate evidence](docs/release-evidence.md)
 
 ## Current limitations
 
-- All fares, durations, and availability are fixed demo records rather than live inventory.
+- Demo mode uses fixed, visibly labeled records; opt-in live mode returns current Amadeus flight inventory without falling back to demo fares.
 - Live mode currently searches flights only; full live multimodal optimization still requires rail, ferry, and positioning inventory.
-- The live flight API requires deployment credentials and shared edge/distributed rate limiting before public high-volume use.
+- The live flight API requires deployment credentials plus explicit distributed per-second and per-day provider budgets before public high-volume use.
 - Distance radius is straight-line distance; it is not ground travel distance or duration.
 - Connection duration does not yet include configurable minimum connection or overnight buffers.
 - Self-transfer risk is explained but not numerically scored.

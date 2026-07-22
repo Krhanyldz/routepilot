@@ -59,7 +59,7 @@ function LiveIntro() { return <div className="grid min-h-72 place-items-center r
 function LiveLoading() { return <div aria-label="Searching live flights" className="h-72 animate-pulse rounded-3xl bg-slate-200/70 dark:bg-white/8"/>; }
 function formatTime(value: string): string { return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 function publicError(reason: string): string {
-  if (reason === "request-rate-limit") return "Too many searches. Please wait a moment and try again.";
+  if (reason === "request-rate-limit" || reason === "provider-budget-exhausted") return "Search capacity is busy. Please wait a moment and try again.";
   if (reason === "live-mode-disabled" || reason === "provider-misconfigured") return "Live search is not configured yet.";
   if (reason === "timeout") return "The travel provider took too long to respond. Please try again.";
   return "Live search is temporarily unavailable. Please try again.";

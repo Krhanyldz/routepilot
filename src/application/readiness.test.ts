@@ -8,7 +8,7 @@ describe("deployment readiness", () => {
     expect(evaluateReadiness({ ROUTE_DATA_MODE: "demo" }, now)).toEqual({
       status: "ready",
       mode: "demo",
-      checks: { flightInventory: "not-required", requestProtection: "not-required" },
+      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required" },
       checkedAt: "2026-07-22T12:00:00.000Z",
     });
   });
@@ -17,7 +17,7 @@ describe("deployment readiness", () => {
     expect(evaluateReadiness({ ROUTE_DATA_MODE: "invalid" }, now)).toMatchObject({ status: "not-ready", mode: "invalid" });
     expect(evaluateReadiness({ NODE_ENV: "production", ROUTE_DATA_MODE: "live" }, now)).toMatchObject({
       status: "not-ready",
-      checks: { flightInventory: "misconfigured", requestProtection: "misconfigured" },
+      checks: { flightInventory: "misconfigured", requestProtection: "misconfigured", providerBudget: "misconfigured" },
     });
   });
 
@@ -32,10 +32,12 @@ describe("deployment readiness", () => {
       UPSTASH_REDIS_REST_URL: "https://redis.example",
       UPSTASH_REDIS_REST_TOKEN: "token",
       RATE_LIMIT_KEY_SECRET: "a-secure-secret-that-is-at-least-32-characters",
+      PROVIDER_MAX_REQUESTS_PER_SECOND: "20",
+      PROVIDER_MAX_REQUESTS_PER_DAY: "25000",
     }, now)).toMatchObject({
       status: "ready",
       mode: "live",
-      checks: { flightInventory: "ready", requestProtection: "ready" },
+      checks: { flightInventory: "ready", requestProtection: "ready", providerBudget: "ready" },
     });
   });
 });
