@@ -14,6 +14,7 @@ describe("GET /api/locations/search", () => {
     const response = await GET(request("?query=Hamburg&kind=airport"));
     expect(response.status).toBe(503);
     expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(await response.json()).toMatchObject({ status: "unavailable", reason: "live-mode-disabled" });
   });
 
