@@ -27,6 +27,8 @@ export interface AmadeusAuthorizedClient {
 
 export class AmadeusApiClient implements AmadeusAuthorizedClient {
   private token: CachedToken | undefined;
+  private tokenRefresh: Promise<string> | undefined;
+  private readonly inFlightGets = new Map<string, Promise<unknown>>();
 
   constructor(
     private readonly config: AmadeusConfig,
@@ -35,6 +37,20 @@ export class AmadeusApiClient implements AmadeusAuthorizedClient {
   ) {}
 
   async get(path: string, params: URLSearchParams): Promise<unknown> {
+    const key = `${path}?${params}`;
+    const activeRequest = this.inFlightGets.get(key);
+    if (activeRequest) return activeRequest;
+
+    const request = this.performGet(path, params);
+    this.inFlightGets.set(key, request);
+    try {
+      return await request;
+    } finally {
+      if (this.inFlightGets.get(key) === request) this.inFlightGets.delete(key);
+    }
+  }
+
+  private async performGet(path: string, params: URLSearchParams): Promise<unknown> {
     let response = await this.authorizedGet(path, params);
     for (let attempt = 0; attempt < this.config.maxRetries && isTransient(response.status); attempt += 1) {
       response = await this.authorizedGet(path, params);
@@ -53,6 +69,18 @@ export class AmadeusApiClient implements AmadeusAuthorizedClient {
 
   private async getAccessToken(): Promise<string> {
     if (this.token && this.token.expiresAtMs - 60_000 > this.now()) return this.token.value;
+    if (this.tokenRefresh) return this.tokenRefresh;
+
+    const refresh = this.requestAccessToken();
+    this.tokenRefresh = refresh;
+    try {
+      return await refresh;
+    } finally {
+      if (this.tokenRefresh === refresh) this.tokenRefresh = undefined;
+    }
+  }
+
+  private async requestAccessToken(): Promise<string> {
     const body = new URLSearchParams({
       grant_type: "client_credentials",
       client_id: this.config.clientId,

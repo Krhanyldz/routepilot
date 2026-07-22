@@ -50,7 +50,7 @@ Establish reliable live-search foundations with authoritative location resolutio
 - Real location provider integration for cities, airports, and stations, with canonical IDs and aliases.
 - One production flight-provider integration behind the provider contract.
 - Currency conversion source where needed.
-- Server-side caching, quotas, timeouts, retries, circuit breaking, and provider-health monitoring.
+- Provider-terms-compliant server-side caching, quotas, timeouts, retries, circuit breaking, provider-health monitoring, and in-flight request coalescing.
 - Source, freshness, fare-condition, and live/demo status in normalized results.
 - Validated official booking redirects and provider attribution.
 
