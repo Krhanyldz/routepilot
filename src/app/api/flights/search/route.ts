@@ -1,13 +1,13 @@
 import { executeLiveFlightSearch, parseLiveFlightSearchQuery } from "@/application/live-flight-search";
 import { LiveFlightProviderError } from "@/providers/live-flight";
 import { configureFlightInventory } from "@/providers/production/amadeus";
-import { FixedWindowRateLimiter } from "@/server/rate-limit";
+import { createRequestProtection, RequestProtectionConfigurationError, type RequestProtection } from "@/server/request-protection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maximumBodyBytes = 16_384;
-const rateLimiter = new FixedWindowRateLimiter(20, 60_000);
+let requestProtection: RequestProtection | undefined;
 const responseHeaders = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
@@ -15,8 +15,16 @@ const responseHeaders = {
 
 export async function POST(request: Request): Promise<Response> {
   const requestId = crypto.randomUUID();
-  const clientKey = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const rateLimit = rateLimiter.consume(clientKey);
+  let rateLimit;
+  try {
+    const protection = requestProtection ??= createRequestProtection();
+    rateLimit = await protection.limiter.consume(protection.identify(request));
+  } catch (error) {
+    if (error instanceof RequestProtectionConfigurationError) {
+      return json({ status: "unavailable", reason: "request-protection-misconfigured", requestId }, 503);
+    }
+    return json({ status: "unavailable", reason: "request-protection-unavailable", requestId }, 503);
+  }
   if (!rateLimit.allowed) {
     return json({ status: "failure", reason: "request-rate-limit", requestId }, 429, {
       "Retry-After": String(rateLimit.retryAfterSeconds),
