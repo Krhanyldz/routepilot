@@ -47,6 +47,7 @@ domain models ← all non-UI layers
 - `src/explanations`: deterministic rules explaining savings, speed tradeoffs, rail savings, ticket effects, and self-transfer risk.
 - `src/ai`: deterministic Travel Strategist orchestration over sanitized route-engine evidence; it does not calculate or rank routes.
 - `src/application`: composes provider implementations for the current demo use case.
+- `src/app/api/flights/search`: validated, rate-limited server boundary for opt-in live flight inventory.
 - `src/components`: small presentational search and result components.
 
 ## Nearby departure discovery
@@ -88,11 +89,13 @@ npm run build
 - [Amadeus Flight Provider](docs/amadeus-flight-provider.md)
 - [Dependency security](docs/dependency-security.md)
 - [Continuous integration](docs/continuous-integration.md)
+- [Live Flight Search API](docs/live-flight-search-api.md)
 
 ## Current limitations
 
 - All fares, durations, and availability are fixed demo records rather than live inventory.
 - The Amadeus live adapter foundation is not wired into the UI or deterministic route search yet.
+- The live flight API requires deployment credentials and shared edge/distributed rate limiting before public high-volume use.
 - Distance radius is straight-line distance; it is not ground travel distance or duration.
 - Connection duration does not yet include configurable minimum connection or overnight buffers.
 - Self-transfer risk is explained but not numerically scored.
