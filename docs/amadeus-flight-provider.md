@@ -1,6 +1,6 @@
 # Amadeus Flight Provider
 
-RoutePilot includes server-side Amadeus Self-Service adapters for Flight Offers Search and Airport & City Search. Flight search is exposed only through the protected live API boundary; it is not connected to the public UI or current deterministic route flow yet, and no credentials are committed.
+RoutePilot uses its server-side Amadeus Self-Service adapter for Flight Offers Search. Worldwide public autocomplete is supplied separately by Travelpayouts. No provider credentials are committed.
 
 ## Official API contract
 

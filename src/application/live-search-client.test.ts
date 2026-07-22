@@ -8,7 +8,7 @@ describe("live search browser client", () => {
       locations: [{ id: "loc:airport:de:ham", name: "Hamburg Airport", city: "Hamburg", countryCode: "DE", iataCode: "HAM", type: "airport" }],
     }));
     await expect(searchLiveLocations("Hamburg", undefined, fetchMock)).resolves.toEqual([expect.objectContaining({ iataCode: "HAM" })]);
-    expect(String(fetchMock.mock.calls[0][0])).toContain("kind=airport");
+    expect(String(fetchMock.mock.calls[0][0])).toContain("kind=city-and-airport");
   });
 
   it("normalizes live offers and never accepts demo data", async () => {

@@ -1,16 +1,16 @@
 import tzLookup from "tz-lookup";
 import { buildCanonicalLocationId, createCanonicalLocation, type CanonicalLocation, type CanonicalLocationType } from "@/domain/location";
-import type { AirportSearchProvider, GeocodingProvider, LocationTextSearchQuery } from "@/providers/location-interfaces";
+import { LocationSearchProviderError, type AirportSearchProvider, type GeocodingProvider, type LocationTextSearchQuery } from "@/providers/location-interfaces";
 import { AmadeusApiError, type AmadeusAuthorizedClient } from "./client";
 
-export class AmadeusLocationProviderError extends Error {
+export class AmadeusLocationProviderError extends LocationSearchProviderError {
   constructor(
     readonly code: "invalid-request" | "authentication" | "rate-limit" | "timeout" | "upstream" | "invalid-response",
     message: string,
     readonly retryable: boolean,
     options?: ErrorOptions,
   ) {
-    super(message, options);
+    super(code, message, retryable, options);
     this.name = "AmadeusLocationProviderError";
   }
 }

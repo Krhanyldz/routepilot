@@ -1,32 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { DemoLocationProvider } from "@/providers/demo";
+import type { Location } from "@/domain/models";
+import type { LocationSearchProvider } from "@/providers/interfaces";
 import { discoverNearbyDeparturePoints, haversineDistanceKm } from "./geography";
 
-const locations = new DemoLocationProvider();
-const bremen = locations.getById("city-bremen");
-
-if (!bremen) throw new Error("Demo Bremen location is missing");
+const origin: Location = { id: "origin", name: "Origin", city: "Origin", countryCode: "ZZ", type: "city", latitude: 0, longitude: 0 };
+const near: Location = { id: "near", name: "Near", city: "Near", countryCode: "ZZ", type: "airport", latitude: 0, longitude: 0.5, code: "NAA" };
+const far: Location = { id: "far", name: "Far", city: "Far", countryCode: "ZZ", type: "airport", latitude: 0, longitude: 3, code: "FAA" };
+const catalog = [origin, near, far];
+const provider: LocationSearchProvider = {
+  id: "test-locations",
+  getById: (id) => catalog.find((location) => location.id === id),
+  searchByCity: (city) => catalog.filter((location) => location.city === city),
+  listDeparturePoints: () => catalog,
+};
 
 describe("geographical departure discovery", () => {
   it("calculates Haversine distance", () => {
-    const hamburg = locations.getById("airport-hamburg");
-    if (!hamburg) throw new Error("Demo Hamburg location is missing");
-    expect(haversineDistanceKm(bremen, hamburg)).toBeCloseTo(99.78, 1);
+    expect(haversineDistanceKm(origin, near)).toBeCloseTo(55.6, 1);
   });
 
-  it.each([
-    [50, ["city-bremen", "airport-bremen"]],
-    [100, ["city-bremen", "airport-bremen", "airport-hannover", "airport-hamburg"]],
-    [150, ["city-bremen", "airport-bremen", "airport-hannover", "airport-hamburg", "airport-fmo"]],
-    [250, ["city-bremen", "airport-bremen", "airport-hannover", "airport-hamburg", "airport-fmo", "airport-dortmund"]],
-  ])("returns only departure points within %i km", (radius, expectedIds) => {
-    const result = discoverNearbyDeparturePoints(bremen, radius, locations);
-    expect(result.map(({ location }) => location.id).sort()).toEqual(expectedIds.sort());
-    expect(result.every(({ distanceKm }) => distanceKm <= radius)).toBe(true);
-  });
-
-  it("keeps Amsterdam discoverable but excludes it beyond the selected radius", () => {
-    expect(locations.listDeparturePoints().some(({ code }) => code === "AMS")).toBe(true);
-    expect(discoverNearbyDeparturePoints(bremen, 250, locations).some(({ location }) => location.code === "AMS")).toBe(false);
+  it("returns only locations inside the selected radius", () => {
+    expect(discoverNearbyDeparturePoints(origin, 100, provider).map(({ location }) => location.id).sort())
+      .toEqual(["near", "origin"]);
+    expect(discoverNearbyDeparturePoints(origin, 250, provider).some(({ location }) => location.id === "far")).toBe(false);
   });
 });

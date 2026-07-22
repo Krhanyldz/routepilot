@@ -21,7 +21,7 @@ export async function searchLiveLocations(
   signal?: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<readonly LocationOption[]> {
-  const params = new URLSearchParams({ query, kind: "airport", limit: "8" });
+  const params = new URLSearchParams({ query, kind: "city-and-airport", limit: "8" });
   const response = await fetchImpl(`/api/locations/search?${params}`, { signal, headers: { Accept: "application/json" } });
   const payload = await responseJson(response);
   if (!response.ok) throw apiError(payload, response.status);

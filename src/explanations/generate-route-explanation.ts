@@ -12,7 +12,7 @@ export function generateRouteExplanations(context: ExplanationContext): string[]
 
   if (positioning && context.direct && context.recommended.totalCost < context.direct.totalCost) {
     const savings = context.direct.totalCost - context.recommended.totalCost;
-    explanations.push(`${positioning.toLocationId === "airport-hamburg" ? "Hamburg" : "Alternative departure point"}’dan çıkmak toplam €${savings} tasarruf sağlıyor.`);
+    explanations.push(`Alternative departure point saves €${savings} overall.`);
     explanations.push(`The alternative departure airport is cheaper and saves €${savings} overall.`);
   }
   if (positioning?.deutschlandticketEligible && context.hasDeutschlandticket && positioning.basePrice > positioning.price) {

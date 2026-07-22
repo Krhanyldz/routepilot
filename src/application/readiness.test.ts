@@ -4,12 +4,16 @@ import { evaluateReadiness } from "./readiness";
 const now = () => new Date("2026-07-22T12:00:00.000Z");
 
 describe("deployment readiness", () => {
-  it("reports the explicitly isolated demo as ready", () => {
-    expect(evaluateReadiness({ ROUTE_DATA_MODE: "demo" }, now)).toEqual({
+  it("requires worldwide location data even when flight inventory is disabled", () => {
+    expect(evaluateReadiness({ ROUTE_DATA_MODE: "demo", TRAVELPAYOUTS_API_TOKEN: "token" }, now)).toEqual({
       status: "ready",
       mode: "demo",
-      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required" },
+      checks: { flightInventory: "not-required", requestProtection: "not-required", providerBudget: "not-required", locationData: "ready" },
       checkedAt: "2026-07-22T12:00:00.000Z",
+    });
+    expect(evaluateReadiness({ ROUTE_DATA_MODE: "demo" }, now)).toMatchObject({
+      status: "not-ready",
+      checks: { locationData: "misconfigured" },
     });
   });
 
@@ -34,10 +38,11 @@ describe("deployment readiness", () => {
       RATE_LIMIT_KEY_SECRET: "a-secure-secret-that-is-at-least-32-characters",
       PROVIDER_MAX_REQUESTS_PER_SECOND: "20",
       PROVIDER_MAX_REQUESTS_PER_DAY: "25000",
+      TRAVELPAYOUTS_API_TOKEN: "token",
     }, now)).toMatchObject({
       status: "ready",
       mode: "live",
-      checks: { flightInventory: "ready", requestProtection: "ready", providerBudget: "ready" },
+      checks: { flightInventory: "ready", requestProtection: "ready", providerBudget: "ready", locationData: "ready" },
     });
   });
 });

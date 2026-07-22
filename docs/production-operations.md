@@ -51,12 +51,12 @@ The framework disclosure header is disabled. The CSP retains `unsafe-inline` for
 
 Before switching `ROUTE_DATA_MODE` to `live`:
 
-1. Configure Amadeus credentials server-side.
+1. Configure Travelpayouts and Amadeus credentials server-side.
 2. Configure the Upstash REST URL, token, and a unique 32+ character rate-limit key secret.
 3. For Amadeus production, set `PROVIDER_MAX_REQUESTS_PER_SECOND` to the approved integer budget from 1 to 40 and `PROVIDER_MAX_REQUESTS_PER_DAY` to the operator-approved positive daily cost ceiling. Test mode is fixed to one request per 100 ms.
 4. Confirm the Amadeus account billing alert and the RoutePilot daily budget describe the same approved exposure.
 5. Confirm the ingress overwrites `X-Forwarded-For`.
-6. Confirm `/api/health` returns `200 ready`, including `providerBudget: ready`.
+6. Confirm `/api/health` returns `200 ready`, including `locationData: ready` and `providerBudget: ready`.
 7. Exercise a live search and verify provider failures do not expose upstream messages.
 8. Run `EXPECTED_ROUTE_DATA_MODE=live npm run smoke -- https://deployment.example` against the deployment URL.
 
