@@ -63,6 +63,30 @@ describe("Amadeus API client request coalescing", () => {
       .resolves.toEqual({ data: [] });
     expect(fetchMock.mock.calls.filter(([url]) => String(url).includes("oauth2/token"))).toHaveLength(2);
   });
+
+  it("opens after repeated transient failures and later permits recovery", async () => {
+    let now = 1_000;
+    const fetchMock = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ access_token: "token", expires_in: 1_800 }))
+      .mockResolvedValueOnce(jsonResponse({}, 503))
+      .mockResolvedValueOnce(jsonResponse({}, 503))
+      .mockResolvedValueOnce(jsonResponse({}, 503))
+      .mockResolvedValueOnce(jsonResponse({ data: [] }));
+    const client = new AmadeusApiClient(config, fetchMock, () => now);
+
+    for (const keyword of ["Ham", "Ber", "Bre"]) {
+      await expect(client.get("/v1/reference-data/locations", new URLSearchParams({ keyword })))
+        .rejects.toMatchObject({ code: "upstream" });
+    }
+    await expect(client.get("/v1/reference-data/locations", new URLSearchParams({ keyword: "Muc" })))
+      .rejects.toMatchObject({ code: "upstream", message: "Amadeus is temporarily unavailable" });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+
+    now += 30_000;
+    await expect(client.get("/v1/reference-data/locations", new URLSearchParams({ keyword: "Muc" })))
+      .resolves.toEqual({ data: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
 });
 
 function jsonResponse(body: unknown, status = 200): Response {
