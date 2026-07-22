@@ -18,6 +18,8 @@ Flight and location search endpoints emit one JSON completion event per request.
 
 Events intentionally exclude client addresses, search terms, airport pairs, dates, provider payloads, credentials, and exception messages. Platform log drains may derive request counts, error ratios, latency distributions, rate-limit counts, and provider-unavailability alerts from `api.request.completed`. External error tracking still requires a separately approved service and credentials.
 
+Repeated retryable Amadeus failures open an instance-local circuit for 30 seconds. During that window searches fail fast with the existing safe upstream failure contract. A single half-open probe restores service after recovery; operators should alert on sustained `upstream` outcomes across instances.
+
 ## Browser security baseline
 
 Every route receives the following response headers:

@@ -1,4 +1,5 @@
 import type { AmadeusConfig } from "./config";
+import { CircuitBreaker, CircuitOpenError } from "@/server/circuit-breaker";
 
 type Fetch = typeof fetch;
 
@@ -29,24 +30,43 @@ export class AmadeusApiClient implements AmadeusAuthorizedClient {
   private token: CachedToken | undefined;
   private tokenRefresh: Promise<string> | undefined;
   private readonly inFlightGets = new Map<string, Promise<unknown>>();
+  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(
     private readonly config: AmadeusConfig,
     private readonly fetchImpl: Fetch = fetch,
     private readonly now: () => number = Date.now,
-  ) {}
+  ) {
+    this.circuitBreaker = new CircuitBreaker(
+      3,
+      30_000,
+      (error) => error instanceof AmadeusApiError && error.retryable,
+      now,
+    );
+  }
 
   async get(path: string, params: URLSearchParams): Promise<unknown> {
     const key = `${path}?${params}`;
     const activeRequest = this.inFlightGets.get(key);
     if (activeRequest) return activeRequest;
 
-    const request = this.performGet(path, params);
+    const request = this.protectedGet(path, params);
     this.inFlightGets.set(key, request);
     try {
       return await request;
     } finally {
       if (this.inFlightGets.get(key) === request) this.inFlightGets.delete(key);
+    }
+  }
+
+  private async protectedGet(path: string, params: URLSearchParams): Promise<unknown> {
+    try {
+      return await this.circuitBreaker.execute(() => this.performGet(path, params));
+    } catch (error) {
+      if (error instanceof CircuitOpenError) {
+        throw new AmadeusApiError("upstream", "Amadeus is temporarily unavailable", true, { cause: error });
+      }
+      throw error;
     }
   }
 
