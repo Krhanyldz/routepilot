@@ -94,6 +94,7 @@ npm run build
 - [Live Flight Search API](docs/live-flight-search-api.md)
 - [Live Location Search API](docs/live-location-search-api.md)
 - [Production operations](docs/production-operations.md)
+- [Security review](docs/security-review.md)
 
 ## Current limitations
 

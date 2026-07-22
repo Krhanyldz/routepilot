@@ -24,13 +24,16 @@ Repeated retryable Amadeus failures open an instance-local circuit for 30 second
 
 Every route receives the following response headers:
 
+- `Content-Security-Policy` limiting resources and connections to the application origin, blocking frames/plugins, and fixing base/form targets
 - `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Resource-Policy: same-origin`
 - `Permissions-Policy` denying camera, microphone, geolocation, and payment access
 - `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=31536000`
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 
-The framework disclosure header is disabled. A Content Security Policy is intentionally deferred until nonce-based Next.js rendering is implemented and tested; adding a permissive policy would provide misleading protection.
+The framework disclosure header is disabled. The CSP retains `unsafe-inline` for Next.js bootstrap scripts and styles so public pages remain statically generated and CDN-cacheable. The residual risk and nonce trade-off are recorded in the [security review](security-review.md). HSTS subdomain coverage and preload are deferred until domain ownership and every subdomain are reviewed.
 
 ## Deployment gate
 
